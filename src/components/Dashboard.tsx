@@ -95,7 +95,6 @@ export default function Dashboard() {
           </Card>
         </Col>
       </Row>
-
       {/* Baris 2: Grid 2x2 */}
       <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
         {/* Kolom 1 */}

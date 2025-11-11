@@ -51,6 +51,7 @@ interface VendorData {
 }
 
 const ResultHistory: React.FC = () => {
+
   const { theme } = useTheme();
   const [folders, setFolders] = useState<JobFolder[]>([]);
   const [selectedFolder, setSelectedFolder] = useState<string>('');
@@ -66,6 +67,7 @@ const ResultHistory: React.FC = () => {
   const [uniqueJobNumbers, setUniqueJobNumbers] = useState<string[]>([]);
   const [uniqueDates, setUniqueDates] = useState<string[]>([]);
   const [filteredFolders, setFilteredFolders] = useState<JobFolder[]>([]);
+
 
   // Helper function untuk mendapatkan warna berdasarkan tema
   const getThemeColors = () => {
@@ -89,7 +91,6 @@ const ResultHistory: React.FC = () => {
   };
 
   const colors = getThemeColors();
-
   useEffect(() => {
     loadFolders();
   }, []);

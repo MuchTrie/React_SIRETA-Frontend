@@ -16,10 +16,3 @@ body {
   display: flex;
   align-items: center;
 }
-
-/* SEMUA CSS KUSTOM UNTUK .ant-menu-item-selected (latar biru muda)
-  TELAH DIHAPUS.
-  
-  Ini penting agar Ant Design bisa mengatur style menu 
-  di mode terang dan gelap secara otomatis.
-*/
