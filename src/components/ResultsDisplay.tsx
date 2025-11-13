@@ -1,4 +1,3 @@
-import React from 'react';
 import { Card, Table, Tag, Statistic, Row, Col, Typography, Tabs, Button, Space } from 'antd';
 import { DownloadOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import type { ReconciliationResult, ReconciliationData, SettlementData } from '../types';

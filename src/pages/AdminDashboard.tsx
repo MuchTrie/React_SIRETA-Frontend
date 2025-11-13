@@ -1,5 +1,10 @@
-import React from 'react';
-import { Row, Col, Card, Typography } from 'antd';
+import { Row, Col, Card, Typography, Statistic, Table, Divider, Tag } from 'antd';
+import { 
+  ProjectOutlined, 
+  DatabaseOutlined, 
+  ClockCircleOutlined, 
+  ShopOutlined 
+} from '@ant-design/icons';
 import { 
   Column, 
   Line, 
@@ -7,13 +12,31 @@ import {
   Histogram, 
   Scatter 
 } from '@ant-design/charts';
+import { useTheme } from '../context/ThemeContext';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 
-// --- Data palsu (mock data) tidak berubah ---
+// --- Data Palsu (Semua data dan config Anda tetap sama) ---
+const summaryStats = {
+  totalJobs: 8,
+  totalResultFiles: 9,
+  latestJob: '11/11/2025',
+  uniqueVendors: 2
+};
+const vendorDistribution = [
+  { vendor: 'JALIN', files: 1 },
+  { vendor: 'ALTO', files: 8 }
+];
+const jobHistory = [
+  { id: '#0001', tanggal: '11/11/2025', vendor: 'JALIN', totalFiles: 1 },
+  { id: '#0002', tanggal: '11/11/2025', vendor: 'ALTO', totalFiles: 2 },
+  { id: '#0003', tanggal: '10/11/2025', vendor: 'ALTO', totalFiles: 3 },
+  { id: '#0004', tanggal: '10/11/2025', vendor: 'JALIN', totalFiles: 1 },
+  { id: '#0005', tanggal: '09/11/2025', vendor: 'ALTO', totalFiles: 3 },
+];
 const stackedColumnData = [
   { vendor: 'Alto', value: 220, type: 'Match' }, { vendor: 'Alto', value: 100, type: 'Mismatch' }, { vendor: 'Alto', value: 60, type: 'Pending' },
-  { vendor: 'Jalin', value: 310, type: 'Match' }, { vendor: 'Jalin', value: 150, type: 'Mismatch' }, { vendor: 'Jalin', value: 80, type: 'Pending' },
+  { vendor: 'JJALIN', value: 310, type: 'Match' }, { vendor: 'JJALIN', value: 150, type: 'Mismatch' }, { vendor: 'JJALIN', value: 80, type: 'Pending' },
 ];
 const lineChartData = [
   { date: '2025-11-01', value: 300, type: 'Sukses' }, { date: '2025-11-01', value: 50, type: 'Gagal' },
@@ -41,7 +64,8 @@ const scatterPlotData = [
   { jumlahFile: 50, waktuProses: 15, status: 'Sukses' }, { jumlahFile: 15, waktuProses: 6, status: 'Sukses' },
   { jumlahFile: 25, waktuProses: 11, status: 'Gagal' }, { jumlahFile: 45, waktuProses: 14, status: 'Sukses' },
 ];
-// --- Konfigurasi (config) tidak berubah ---
+
+// --- Konfigurasi (config) ---
 const columnConfig = {
   data: stackedColumnData, isStack: true, xField: 'vendor',
   yField: 'value', seriesField: 'type',
@@ -58,7 +82,9 @@ const pieConfig = {
   appendPadding: 10, data: pieChartData, angleField: 'value',
   colorField: 'type', radius: 0.8,
   label: {
-    type: 'inner' as const, offset: '-50%', content: '{value}',
+    type: 'inner' as const, 
+    offset: '-50%', 
+    content: (data: any) => `${(data.percentage * 100).toFixed(0)}%`, // Perbaikan
     style: { textAlign: 'center' as const, fontSize: 12, fill: '#fff' },
   },
   interactions: [{ type: 'element-selected' as const }, { type: 'element-active' as const }],
@@ -71,65 +97,170 @@ const histogramConfig = {
   height: 250,
 };
 const scatterConfig = {
-  data: scatterPlotData, xField: 'jumlahFile', yField: 'waktuProses',
-  colorField: 'status', shape: 'circle' as const, size: 5,
+  data: scatterPlotData, 
+  xField: 'jumlahFile', 
+  yField: 'waktuProses',
+  colorField: 'status', 
+  shape: 'circle' as const, 
+  size: 5,
   yAxis: { title: { text: 'Waktu Proses (detik)' } },
-  xAxis: { title: { text: 'Jumlah File' } }, height: 250,
+  xAxis: { title: { text: 'Jumlah File' } }, 
+  height: 250,
 };
 
-export default function Dashboard() {
+export default function AdminDashboard() { 
+  const { theme: themeMode } = useTheme();
   
   return (
     <div>
-      <Title level={2}>Dashboard Operasional</Title>
-      <Typography.Text type="secondary">
+      <Title level={2}>Dashboard Admin</Title>
+      <Text type="secondary">
         Ringkasan hasil pemrosesan rekonsiliasi
-      </Typography.Text>
+      </Text>
 
-      {/* Baris 1: Grafik Garis (Lebar Penuh) */}
+      {/* --- 👇 BAGIAN STATS, DISTRIBUSI, & RIWAYAT (DIPINDAH KE ATAS) 👇 --- */}
+      
+      {/* Ringkasan Statistik */}
+      <Row gutter={[16, 16]} style={{ marginTop: 24 }}>
+        <Col xs={12} md={6}>
+          <Card>
+            <Statistic
+              title="Total Jobs"
+              value={summaryStats.totalJobs}
+              prefix={<ProjectOutlined style={{ color: '#1890ff' }} />}
+            />
+          </Card>
+        </Col>
+        <Col xs={12} md={6}>
+          <Card>
+            <Statistic
+              title="Total Result Files"
+              value={summaryStats.totalResultFiles}
+              prefix={<DatabaseOutlined style={{ color: '#52c41a' }} />}
+            />
+          </Card>
+        </Col>
+        <Col xs={12} md={6}>
+          <Card>
+            <Statistic
+              title="Latest Job"
+              value={summaryStats.latestJob}
+              prefix={<ClockCircleOutlined style={{ color: '#faad14' }} />}
+            />
+          </Card>
+        </Col>
+        <Col xs={12} md={6}>
+          <Card>
+            <Statistic
+              title="Unique Vendors"
+              value={summaryStats.uniqueVendors}
+              prefix={<ShopOutlined style={{ color: '#f5222d' }} />}
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Distribusi Vendor */}
+      <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+        <Col xs={24}>
+          <Card title="Distribusi Vendor">
+            <Row gutter={[16, 16]} justify="start"> {/* Ganti 'center' menjadi 'start' */}
+              {vendorDistribution.map((item, index) => (
+                // Ganti Col span agar tidak terlalu kecil
+                <Col xs={12} sm={8} md={6} key={index}> 
+                  <Card size="small" style={{ textAlign: 'center' }}>
+                    <Text strong style={{ fontSize: '18px', display: 'block' }}>{item.vendor}</Text>
+                    <Text type="secondary" style={{ fontSize: '14px' }}>{item.files} file{item.files > 1 ? 's' : ''}</Text>
+                  </Card>
+                </Col>
+              ))}
+            </Row>
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Riwayat Job Rekonsiliasi */}
+      <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+        <Col xs={24}>
+          <Card title="Riwayat Job Rekonsiliasi">
+            <Table
+              dataSource={jobHistory}
+              rowKey="id"
+              size="small"
+              pagination={false}
+              columns={[
+                {
+                  title: 'ID',
+                  dataIndex: 'id',
+                  key: 'id',
+                  render: (id: string) => <Tag color="blue">{id}</Tag>, // Tambah render Tag
+                },
+                {
+                  title: 'Tanggal',
+                  dataIndex: 'tanggal',
+                  key: 'tanggal',
+                },
+                {
+                  title: 'Vendor',
+                  dataIndex: 'vendor',
+                  key: 'vendor',
+                  render: (vendor: string) => (
+                    <Tag color="green">{vendor}</Tag>
+                  ),
+                },
+                {
+                  title: 'Total Files',
+                  dataIndex: 'totalFiles',
+                  key: 'totalFiles',
+                  render: (files: number) => (
+                    <Tag color="orange">{`${files} file${files > 1 ? 's' : ''}`}</Tag> // Ganti Badge
+                  ),
+                },
+              ]}
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* --- 👆 AKHIR BAGIAN STATS, DISTRIBUSI, & RIWAYAT 👆 --- */}
+
+      <Divider style={{ marginTop: 32, marginBottom: 24 }}>Visualisasi Data</Divider>
+
+      {/* --- 👇 BAGIAN CHARTS (SEKARANG DI BAWAH) 👇 --- */}
       <Row gutter={[16, 16]} style={{ marginTop: 24 }}>
         <Col xs={24} lg={24}>
-          {/* --- 👇 Tambah border di sini 👇 --- */}
-          <Card title="Tren Proses Harian (Grafik Garis)" style={{ minHeight: 320, border: '1px solid #e8e8e8' }}>
-            <Line {...lineConfig} />
+          <Card title="Tren Proses Harian" style={{ minHeight: 320 }}>
+            <Line {...lineConfig} theme={themeMode} />
           </Card>
         </Col>
       </Row>
 
-      {/* Baris 2: Grid 2x2 */}
       <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
-        {/* Kolom 1 */}
         <Col xs={24} md={12} lg={12}>
-          {/* --- 👇 Tambah border di sini 👇 --- */}
-          <Card title="Status Rekonsiliasi per Vendor" style={{ minHeight: 320, border: '1px solid #e8e8e8' }}>
-            <Column {...columnConfig} />
+          <Card title="Status Rekonsiliasi per Vendor" style={{ minHeight: 320 }}>
+            <Column {...columnConfig} theme={themeMode} />
           </Card>
         </Col>
         
-        {/* Kolom 2 */}
         <Col xs={24} md={12} lg={12}>
-          {/* --- 👇 Tambah border di sini 👇 --- */}
-          <Card title="Proporsi Hasil (Diagram Lingkaran)" style={{ minHeight: 320, border: '1px solid #e8e8e8' }}>
-            <Pie {...pieConfig} />
+          <Card title="Proporsi Hasil" style={{ minHeight: 320 }}>
+            <Pie {...pieConfig} theme={themeMode} />
           </Card>
         </Col>
         
-        {/* Kolom 3 */}
         <Col xs={24} md={12} lg={12}>
-          {/* --- 👇 Tambah border di sini 👇 --- */}
-          <Card title="Distribusi Waktu Proses (Histogram)" style={{ minHeight: 320, border: '1px solid #e8e8e8' }}>
-            <Histogram {...histogramConfig} />
+          <Card title="Distribusi Waktu Proses" style={{ minHeight: 320 }}>
+            <Histogram {...histogramConfig} theme={themeMode} />
           </Card>
         </Col>
         
-        {/* Kolom 4 */}
         <Col xs={24} md={12} lg={12}>
-          {/* --- 👇 Tambah border di sini 👇 --- */}
-          <Card title="Korelasi File vs Waktu (Scatter Plot)" style={{ minHeight: 320, border: '1px solid #e8e8e8' }}>
-            <Scatter {...scatterConfig} />
+          <Card title="Korelasi File vs Waktu" style={{ minHeight: 320 }}>
+            <Scatter {...scatterConfig} theme={themeMode} />
           </Card>
         </Col>
       </Row>
+
     </div>
   );
 }

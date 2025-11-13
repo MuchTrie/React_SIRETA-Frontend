@@ -15,4 +15,10 @@ body {
 .ant-layout-header {
   display: flex;
   align-items: center;
+  background: transparent !important;
+}
+
+/* Force header and sidebar background colors */
+.ant-layout-sider {
+  background: transparent !important;
 }
