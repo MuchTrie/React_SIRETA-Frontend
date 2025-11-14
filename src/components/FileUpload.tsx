@@ -28,12 +28,16 @@ const detectVendor = (filename: string): string | null => {
   // Deteksi berdasarkan kode vendor (untuk file recon/settlement)
   if (name.includes('360004')) return 'jalin';  // JALIN code
   if (name.includes('360003')) return 'alto';   // ALTO code
+  if (name.includes('360002')) return 'rinti';  // RINTIS code
+  if (name.includes('360001')) return 'aj';     // ARTAJASA code
   
   // Deteksi berdasarkan nama vendor (untuk file core atau file dengan nama vendor)
   if (name.includes('jalin')) return 'jalin';
   if (name.includes('alto')) return 'alto';
   if (name.includes('aj')) return 'aj';
+  if (name.includes('artajasa')) return 'aj';
   if (name.includes('rinti')) return 'rinti';
+  if (name.includes('rintis')) return 'rinti';
   
   return null;
 }
