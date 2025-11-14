@@ -496,7 +496,7 @@ const ResultHistory: React.FC = () => {
 
   return (
     <div>
-      <Title level={2}>📊 Riwayat Hasil Rekonsiliasi</Title>
+      <Title level={2}>Riwayat Hasil Rekonsiliasi</Title>
       <Text type="secondary">
         Pilih tanggal untuk melihat hasil rekonsiliasi
       </Text>

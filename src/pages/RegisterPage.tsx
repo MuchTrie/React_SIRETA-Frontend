@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { Form, Input, Button, Card, Typography, Alert, Spin, Select } from 'antd';
-import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
+import { useState } from 'react';
+import { Form, Input, Button, Card, Typography, Alert, Spin, Select, Switch } from 'antd';
+import { UserOutlined, LockOutlined, MailOutlined, MoonFilled, SunFilled } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -13,7 +14,13 @@ export default function RegisterPage() {
   const [success, setSuccess] = useState('');
   const navigate = useNavigate();
   const { register } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [form] = Form.useForm();
+
+  // Theme colors
+  const bgColor = theme === 'dark' ? '#1c1c27' : '#f0f2f5';
+  const cardBgColor = theme === 'dark' ? '#25254f' : '#ffffff';
+  const textColor = theme === 'dark' ? 'rgba(255, 255, 255, 0.95)' : 'rgba(0, 0, 0, 0.88)';
 
   const onFinish = async (values: any) => {
     setLoading(true);
@@ -21,6 +28,7 @@ export default function RegisterPage() {
     setSuccess('');
 
     try {
+      // Hanya kirim email, password, dan role (tidak termasuk confirm)
       await register(values.email, values.password, values.role);
       setSuccess('Registrasi berhasil! Anda akan diarahkan ke dashboard.');
       setTimeout(() => {
@@ -30,17 +38,27 @@ export default function RegisterPage() {
     } catch (err: any) {
       const errorMsg = err.response?.data?.message || err.message || 'Registrasi gagal. Coba lagi.';
       setError(errorMsg);
+      console.error('Register error:', err);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#f0f2f5' }}>
-      <Card style={{ width: 450 }}>
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: bgColor }}>
+      <Card style={{ width: 450, backgroundColor: cardBgColor }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
+          <Switch 
+            checkedChildren={<MoonFilled />}
+            unCheckedChildren={<SunFilled />}
+            checked={theme === 'dark'}
+            onChange={toggleTheme}
+            size="small"
+          />
+        </div>
         <Spin spinning={loading}>
-          <Title level={2} style={{ textAlign: 'center' }}>
-            📝 Daftar Akun Baru
+          <Title level={2} style={{ textAlign: 'center', color: textColor }}>
+           Daftar Akun Baru
           </Title>
           
           {error && <Alert message={error} type="error" showIcon style={{ marginBottom: 24 }} />}
@@ -64,10 +82,13 @@ export default function RegisterPage() {
 
             <Form.Item
               name="password"
-              rules={[{ required: true, message: 'Silakan masukkan password Anda!' }]}
+              rules={[
+                { required: true, message: 'Silakan masukkan password Anda!' },
+                { min: 6, message: 'Password minimal 6 karakter!' }
+              ]}
               hasFeedback
             >
-              <Input.Password prefix={<LockOutlined />} placeholder="Password" />
+              <Input.Password prefix={<LockOutlined />} placeholder="Password (minimal 6 karakter)" />
             </Form.Item>
 
             <Form.Item
@@ -105,8 +126,8 @@ export default function RegisterPage() {
               </Button>
             </Form.Item>
 
-            <div style={{ textAlign: 'center' }}>
-              Sudah punya akun? <a href="/login">Login di sini</a>
+            <div style={{ textAlign: 'center', color: textColor }}>
+              Sudah punya akun? <a href="/login" style={{ color: '#1890ff' }}>Login di sini</a>
             </div>
           </Form>
         </Spin>

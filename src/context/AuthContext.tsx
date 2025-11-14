@@ -1,21 +1,16 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import { loginRequest } from '../services/authApi'; 
 import apiClient from '../services/apiClient';
 // Impor API settings
-import { getSettings, FeatureSettings, updateSettings } from '../services/settingsApi'; 
+import { getSettings, FeatureSettings } from '../services/settingsApi'; 
 
-// Tipe untuk payload token
-interface TokenPayload {
-  id: string;
-  role: 'admin' | 'operasional';
-  iat: number;
-}
 
 // Tipe untuk data user
 interface User {
   id: string;
   email: string;
+  username?: string;
   role: 'admin' | 'operasional';
 }
 
@@ -27,6 +22,7 @@ interface AuthContextType {
   login: (email: string, pass: string) => Promise<void>;
   logout: () => void;
   register: (email: string, password: string, role: 'admin' | 'operasional') => Promise<void>;
+  updateUser: (userData: Partial<User>) => void;
   // Kita tambahkan fungsi refresh agar bisa lihat perubahan
   refreshSettings: () => Promise<void>; 
 }
@@ -152,8 +148,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     delete apiClient.defaults.headers.common['Authorization'];
   };
 
+  // Fungsi update user
+  const updateUser = (userData: Partial<User>) => {
+    if (user) {
+      setUser({ ...user, ...userData });
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ isLoggedIn, user, settings, login, logout, register, refreshSettings }}>
+    <AuthContext.Provider value={{ isLoggedIn, user, settings, login, logout, register, updateUser, refreshSettings }}>
       {children}
     </AuthContext.Provider>
   );
