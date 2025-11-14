@@ -3,7 +3,7 @@ import { Upload, Button, Card, Typography, Alert, Table, Space, message, Spin, L
 import { UploadOutlined, DownloadOutlined, EyeOutlined, HistoryOutlined } from '@ant-design/icons';
 import type { UploadFile, UploadProps } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import axios from 'axios';
+import { settlementAPI } from '../services/api';
 
 const { Title, Text, Paragraph } = Typography;
 const { Dragger } = Upload;
@@ -68,9 +68,9 @@ const SettlementConverter: React.FC = () => {
   const fetchConvertedFiles = async () => {
     setLoadingHistory(true);
     try {
-      const response = await axios.get('http://localhost:8080/api/converted/files');
-      if (response.data.success) {
-        setConvertedFiles(response.data.data || []);
+      const response = await settlementAPI.getConvertedFiles();
+      if (response.success) {
+        setConvertedFiles(response.data || []);
       }
     } catch (error) {
       console.error('Error fetching converted files:', error);
@@ -88,26 +88,15 @@ const SettlementConverter: React.FC = () => {
     setLoading(true);
 
     try {
-      const formData = new FormData();
-      formData.append('settlement_file', settlementFile.originFileObj as File);
+      const response = await settlementAPI.convertSettlement(settlementFile.originFileObj as File);
 
-      const response = await axios.post<ConversionResult>(
-        'http://localhost:8080/api/convert/settlement',
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      );
-
-      if (response.data.success) {
+      if (response.success) {
         message.success('File berhasil dikonversi ke CSV!');
-        setConversionResult(response.data);
+        setConversionResult(response);
         // Refresh history
         fetchConvertedFiles();
       } else {
-        message.error(response.data.message || 'Gagal mengkonversi file');
+        message.error(response.message || 'Gagal mengkonversi file');
       }
     } catch (error: any) {
       console.error('Error:', error);
@@ -118,8 +107,8 @@ const SettlementConverter: React.FC = () => {
   };
 
   const handleDownload = () => {
-    if (conversionResult?.data?.download_url) {
-      const url = `http://localhost:8080${conversionResult.data.download_url}`;
+    if (conversionResult?.data?.filename) {
+      const url = settlementAPI.downloadConverted(conversionResult.data.filename);
       const link = document.createElement('a');
       link.href = url;
       link.download = conversionResult.data.filename;

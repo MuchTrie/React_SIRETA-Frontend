@@ -137,12 +137,16 @@ export default function App() {
             </ProtectedRoute>
           }
         >
-          {/* ... (Semua rute Anda yang lain) ... */}
+          {/* Admin Routes - Admin only */}
           <Route path="admin" element={ <ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute> } />
           <Route path="admin/settings" element={ <ProtectedRoute allowedRoles={['admin']}><AdminSettingsPage /></ProtectedRoute> } />
+          
+          {/* Operasional Routes - Operasional only */}
           <Route path="operasional" element={ <ProtectedRoute allowedRoles={['operasional']}><OperationalDashboard /></ProtectedRoute> } />
-          <Route path="proses-rekonsiliasi" element={ <ProtectedRoute allowedRoles={['operasional']}><ProsesRekonsiliasiPage /></ProtectedRoute> } />
-          <Route path="settlement-converter" element={ <ProtectedRoute allowedRoles={['operasional']}><SettlementConverterPage /></ProtectedRoute> } />
+          
+          {/* Shared Routes - Admin bisa akses semua, operasional sesuai permission */}
+          <Route path="proses-rekonsiliasi" element={ <ProtectedRoute allowedRoles={['admin', 'operasional']}><ProsesRekonsiliasiPage /></ProtectedRoute> } />
+          <Route path="settlement-converter" element={ <ProtectedRoute allowedRoles={['admin', 'operasional']}><SettlementConverterPage /></ProtectedRoute> } />
           <Route path="riwayat-recon" element={ <ProtectedRoute allowedRoles={['admin', 'operasional']}><ResultHistoryPage /></ProtectedRoute> } />
           <Route index element={<NavigateToDashboard />} />
         </Route>

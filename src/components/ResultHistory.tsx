@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Table, Card, Select, Button, Space, Typography, Empty, Tag, message, Tabs, Statistic, Row, Col, Spin, Radio } from 'antd';
 import { ReloadOutlined, FolderOpenOutlined, DownloadOutlined, CheckOutlined, CloseOutlined, FilterOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
-import axios from 'axios';
+import { reconciliationAPI } from '../services/api';
 import { useTheme } from '../context/ThemeContext';
 
 const { Title, Text } = Typography;
@@ -161,9 +161,9 @@ const ResultHistory: React.FC = () => {
   const loadFolders = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:8080/api/results');
-      if (response.data.success) {
-        setFolders(response.data.data || []);
+      const response = await reconciliationAPI.getResultFolders();
+      if (response.success) {
+        setFolders(response.data || []);
       } else {
         message.error('Gagal memuat daftar folder');
       }
@@ -238,11 +238,9 @@ const ResultHistory: React.FC = () => {
       // Load recon data
       if (types.recon) {
         try {
-          const response = await axios.get(
-            `http://localhost:8080/api/results/${folderName}/${vendor.toLowerCase()}/recon`
-          );
-          if (response.data.success) {
-            data.reconData = response.data.data || [];
+          const response = await reconciliationAPI.getResultData(folderName, vendor.toLowerCase(), 'recon');
+          if (response.success) {
+            data.reconData = response.data || [];
           }
         } catch (error) {
           console.error(`Failed to load recon data for ${vendor}:`, error);
@@ -252,11 +250,9 @@ const ResultHistory: React.FC = () => {
       // Load settlement data
       if (types.settlement) {
         try {
-          const response = await axios.get(
-            `http://localhost:8080/api/results/${folderName}/${vendor.toLowerCase()}/settlement`
-          );
-          if (response.data.success) {
-            data.settlementData = response.data.data || [];
+          const response = await reconciliationAPI.getResultData(folderName, vendor.toLowerCase(), 'settlement');
+          if (response.success) {
+            data.settlementData = response.data || [];
           }
         } catch (error) {
           console.error(`Failed to load settlement data for ${vendor}:`, error);
@@ -278,7 +274,7 @@ const ResultHistory: React.FC = () => {
   };
 
   const handleDownload = (folderName: string, filename: string) => {
-    const url = `http://localhost:8080/api/download/${folderName}/${filename}`;
+    const url = reconciliationAPI.downloadResult(folderName, filename);
     window.open(url, '_blank');
     message.success(`Downloading ${filename}`);
   };

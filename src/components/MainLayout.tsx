@@ -1,5 +1,5 @@
-import React from 'react';
-import { Layout, Menu, Button, Switch } from 'antd'; // 1. Tambah Switch
+import { useState } from 'react';
+import { Layout, Menu, Button, Switch, Modal, Typography } from 'antd';
 import {
   DashboardOutlined,
   FileTextOutlined,
@@ -10,18 +10,24 @@ import {
   ControlOutlined,
   MoonFilled,
   SunFilled,
+  LockOutlined,
+  ExclamationCircleOutlined,
 } from '@ant-design/icons';
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext'; 
-import { useTheme } from '../context/ThemeContext'; // 3. Import useTheme
+import { useTheme } from '../context/ThemeContext';
 
 const { Header, Content, Footer } = Layout;
-const { Sider } = Layout; 
+const { Sider } = Layout;
+const { Text } = Typography;
 
 export default function MainLayout() {
   const { user, logout, settings } = useAuth(); 
-  const { theme, toggleTheme } = useTheme(); // 4. Dapatkan state & fungsi tema
+  const { theme, toggleTheme } = useTheme();
   const location = useLocation();
+  const navigate = useNavigate();
+  const [showWarningModal, setShowWarningModal] = useState(false);
+  const [blockedFeature, setBlockedFeature] = useState('');
 
   const getSelectedKey = () => {
     const path = location.pathname;
@@ -32,6 +38,47 @@ export default function MainLayout() {
     if (path.startsWith('/riwayat-recon')) return 'history';
     if (path.startsWith('/settlement-converter')) return 'converter';
     return 'ops_dashboard';
+  };
+
+  // Handler untuk menu yang di-lock (operasional only)
+  const handleLockedMenuClick = (featureName: string) => {
+    setBlockedFeature(featureName);
+    setShowWarningModal(true);
+  };
+
+  // Handler untuk menu click
+  const handleMenuClick = (e: any) => {
+    const key = e.key;
+    
+    // Jika operasional, cek apakah fitur di-lock
+    if (user?.role === 'operasional') {
+      if (key === 'process' && !settings?.isProsesReconEnabled) {
+        handleLockedMenuClick('Proses Rekonsiliasi');
+        return;
+      }
+      if (key === 'converter' && !settings?.isConverterEnabled) {
+        handleLockedMenuClick('Settlement Converter');
+        return;
+      }
+      if (key === 'history' && !settings?.isHistoryEnabled) {
+        handleLockedMenuClick('Riwayat Rekonsiliasi');
+        return;
+      }
+    }
+    
+    // Jika tidak di-lock, navigate normal
+    const routes: Record<string, string> = {
+      admin_dashboard: '/admin',
+      admin_settings: '/admin/settings',
+      ops_dashboard: '/operasional',
+      process: '/proses-rekonsiliasi',
+      converter: '/settlement-converter',
+      history: '/riwayat-recon',
+    };
+    
+    if (routes[key]) {
+      navigate(routes[key]);
+    }
   };
 
   return (
@@ -84,54 +131,80 @@ export default function MainLayout() {
           <Menu
             mode="inline"
             selectedKeys={[getSelectedKey()]}
+            onClick={handleMenuClick}
             style={{ 
               height: '100%', 
               borderRight: 0, 
               paddingTop: 24,
-              // Hapus 'background: #fff'
             }}
           >
-            {/* Menu Admin */}
+            {/* Menu Admin - Full Access */}
             {user?.role === 'admin' && (
               <>
                 <Menu.Item key="admin_dashboard" icon={<TeamOutlined />}>
-                  <Link to="/admin">Admin Dashboard</Link>
+                  Admin Dashboard
                 </Menu.Item>
                 <Menu.Item key="admin_settings" icon={<ControlOutlined />}>
-                  <Link to="/admin/settings">Settings</Link>
+                  Settings
+                </Menu.Item>
+                <Menu.Item key="process" icon={<FileTextOutlined />}>
+                  Proses Rekonsiliasi
+                </Menu.Item>
+                <Menu.Item key="converter" icon={<SwapOutlined />}>
+                  Settlement Converter
+                </Menu.Item>
+                <Menu.Item key="history" icon={<HistoryOutlined />}>
+                  Riwayat Recon
                 </Menu.Item>
               </>
             )}
 
-            {/* Menu Operasional (Kondisional) */}
+            {/* Menu Operasional - dengan Lock Icons */}
             {user?.role === 'operasional' && (
               <>
                 <Menu.Item key="ops_dashboard" icon={<DashboardOutlined />}>
-                  <Link to="/operasional">Dashboard</Link>
+                  Dashboard
                 </Menu.Item>
                 
-                {settings?.isProsesReconEnabled && (
-                  <Menu.Item key="process" icon={<FileTextOutlined />}>
-                    <Link to="/proses-rekonsiliasi">Proses Rekonsiliasi</Link>
-                  </Menu.Item>
-                )}
+                {/* Proses Rekonsiliasi - Show lock jika disabled */}
+                <Menu.Item 
+                  key="process" 
+                  icon={settings?.isProsesReconEnabled ? <FileTextOutlined /> : <LockOutlined />}
+                  disabled={!settings?.isProsesReconEnabled}
+                  style={{ 
+                    color: !settings?.isProsesReconEnabled ? '#bbb' : undefined,
+                    cursor: !settings?.isProsesReconEnabled ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  Proses Rekonsiliasi {!settings?.isProsesReconEnabled && '🔒'}
+                </Menu.Item>
                 
-                {settings?.isConverterEnabled && (
-                  <Menu.Item key="converter" icon={<SwapOutlined />}>
-                    <Link to="/settlement-converter">Settlement Converter</Link>
-                  </Menu.Item>
-                )}
+                {/* Settlement Converter - Show lock jika disabled */}
+                <Menu.Item 
+                  key="converter" 
+                  icon={settings?.isConverterEnabled ? <SwapOutlined /> : <LockOutlined />}
+                  disabled={!settings?.isConverterEnabled}
+                  style={{ 
+                    color: !settings?.isConverterEnabled ? '#bbb' : undefined,
+                    cursor: !settings?.isConverterEnabled ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  Settlement Converter {!settings?.isConverterEnabled && '🔒'}
+                </Menu.Item>
+                
+                {/* Riwayat Recon - Show lock jika disabled */}
+                <Menu.Item 
+                  key="history" 
+                  icon={settings?.isHistoryEnabled ? <HistoryOutlined /> : <LockOutlined />}
+                  disabled={!settings?.isHistoryEnabled}
+                  style={{ 
+                    color: !settings?.isHistoryEnabled ? '#bbb' : undefined,
+                    cursor: !settings?.isHistoryEnabled ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  Riwayat Rekon {!settings?.isHistoryEnabled && '🔒'}
+                </Menu.Item>
               </>
-            )}
-
-            {/* Menu Riwayat Recon (Kondisional) */}
-            {( 
-              (user?.role === 'admin') || 
-              (user?.role === 'operasional' && settings?.isHistoryEnabled)
-            ) && (
-              <Menu.Item key="history" icon={<HistoryOutlined />}>
-                <Link to="/riwayat-recon">Riwayat Recon</Link>
-              </Menu.Item>
             )}
 
           </Menu>
@@ -146,14 +219,12 @@ export default function MainLayout() {
               padding: 0, 
               margin: 0, 
               minHeight: 280,
-              // Hapus 'background: transparent'
             }}
           >
             <Outlet />
           </Content>
           <Footer style={{ 
             textAlign: 'center', 
-            // Hapus 'background: transparent'
             paddingTop: 24, 
             paddingBottom: 0 
           }}>
@@ -161,6 +232,29 @@ export default function MainLayout() {
           </Footer>
         </Layout>
       </Layout>
+
+      {/* Warning Modal untuk Fitur yang Di-lock */}
+      <Modal
+        open={showWarningModal}
+        onCancel={() => setShowWarningModal(false)}
+        footer={[
+          <Button key="close" type="primary" onClick={() => setShowWarningModal(false)}>
+            Mengerti
+          </Button>
+        ]}
+        centered
+      >
+        <div style={{ textAlign: 'center', padding: '20px 0' }}>
+          <ExclamationCircleOutlined style={{ fontSize: 48, color: '#faad14', marginBottom: 16 }} />
+          <h3 style={{ marginBottom: 16 }}>Akses Dibatasi</h3>
+          <Text type="secondary">
+            Fitur <strong>{blockedFeature}</strong> saat ini tidak dapat diakses.
+            <br />
+            <br />
+            Hubungi administrator untuk mengaktifkan akses ke fitur ini.
+          </Text>
+        </div>
+      </Modal>
     </Layout>
   );
 }

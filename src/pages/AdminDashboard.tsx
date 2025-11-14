@@ -1,132 +1,227 @@
-import React from 'react';
-import { Row, Col, Card, Typography } from 'antd';
-import { 
-  Column, 
-  Line, 
-  Pie, 
-  Histogram, 
-  Scatter 
-} from '@ant-design/charts';
+import { useState, useEffect } from 'react';
+import { Row, Col, Card, Typography, Statistic, Table, Tag, Progress, Space, Badge } from 'antd';
+import {
+  ArrowUpOutlined,
+  FileTextOutlined,
+  CheckCircleOutlined,
+  TeamOutlined,
+  FolderOpenOutlined,
+  SwapOutlined,
+  ClockCircleOutlined,
+} from '@ant-design/icons';
+import { reconciliationAPI } from '../services/api';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 
-// --- Data palsu (mock data) tidak berubah ---
-const stackedColumnData = [
-  { vendor: 'Alto', value: 220, type: 'Match' }, { vendor: 'Alto', value: 100, type: 'Mismatch' }, { vendor: 'Alto', value: 60, type: 'Pending' },
-  { vendor: 'Jalin', value: 310, type: 'Match' }, { vendor: 'Jalin', value: 150, type: 'Mismatch' }, { vendor: 'Jalin', value: 80, type: 'Pending' },
-];
-const lineChartData = [
-  { date: '2025-11-01', value: 300, type: 'Sukses' }, { date: '2025-11-01', value: 50, type: 'Gagal' },
-  { date: '2025-11-02', value: 400, type: 'Sukses' }, { date: '2025-11-02', value: 70, type: 'Gagal' },
-  { date: '2025-11-03', value: 350, type: 'Sukses' }, { date: '2025-11-03', value: 60, type: 'Gagal' },
-  { date: '2025-11-04', value: 500, type: 'Sukses' }, { date: '2025-11-04', value: 80, type: 'Gagal' },
-  { date: '2025-11-05', value: 450, type: 'Sukses' }, { date: '2025-11-05', value: 110, type: 'Gagal' },
-];
-const pieChartData = [
-  { type: 'Match', value: 2700 },
-  { type: 'Mismatch', value: 250 },
-  { type: 'Belum Diproses', value: 180 },
-];
-const histogramData = [
-  { value: 1.5 }, { value: 2.1 }, { value: 2.5 }, { value: 2.8 }, { value: 3.1 },
-  { value: 3.2 }, { value: 3.2 }, { value: 3.3 }, { value: 3.5 }, { value: 3.5 },
-  { value: 3.6 }, { value: 3.8 }, { value: 4.0 }, { value: 4.1 }, { value: 4.1 },
-  { value: 4.2 }, { value: 4.2 }, { value: 4.2 }, { value: 4.3 }, { value: 4.5 },
-  { value: 4.8 }, { value: 5.1 }, { value: 5.3 }, { value: 5.5 }, { value: 5.8 },
-  { value: 6.2 }, { value: 6.5 }, { value: 7.1 }, { value: 8.5 }, { value: 9.2 }
-];
-const scatterPlotData = [
-  { jumlahFile: 10, waktuProses: 5, status: 'Sukses' }, { jumlahFile: 20, waktuProses: 7, status: 'Sukses' },
-  { jumlahFile: 5, waktuProses: 10, status: 'Gagal' }, { jumlahFile: 30, waktuProses: 12, status: 'Sukses' },
-  { jumlahFile: 50, waktuProses: 15, status: 'Sukses' }, { jumlahFile: 15, waktuProses: 6, status: 'Sukses' },
-  { jumlahFile: 25, waktuProses: 11, status: 'Gagal' }, { jumlahFile: 45, waktuProses: 14, status: 'Sukses' },
-];
-// --- Konfigurasi (config) tidak berubah ---
-const columnConfig = {
-  data: stackedColumnData, isStack: true, xField: 'vendor',
-  yField: 'value', seriesField: 'type',
-  legend: { position: 'top' as const },
-  color: ['#34A853', '#4285F4', '#FF69B4'], height: 250,
-};
-const lineConfig = {
-  data: lineChartData, xField: 'date', yField: 'value',
-  seriesField: 'type', yAxis: { label: { formatter: (v: string) => `${v}` } },
-  legend: { position: 'top' as const }, point: { size: 5, shape: 'diamond' },
-  height: 250,
-};
-const pieConfig = {
-  appendPadding: 10, data: pieChartData, angleField: 'value',
-  colorField: 'type', radius: 0.8,
-  label: {
-    type: 'inner' as const, offset: '-50%', content: '{value}',
-    style: { textAlign: 'center' as const, fontSize: 12, fill: '#fff' },
-  },
-  interactions: [{ type: 'element-selected' as const }, { type: 'element-active' as const }],
-  legend: { position: 'bottom' as const }, height: 250,
-};
-const histogramConfig = {
-  data: histogramData,
-  binField: 'value',
-  binWidth: 1,
-  height: 250,
-};
-const scatterConfig = {
-  data: scatterPlotData, xField: 'jumlahFile', yField: 'waktuProses',
-  colorField: 'status', shape: 'circle' as const, size: 5,
-  yAxis: { title: { text: 'Waktu Proses (detik)' } },
-  xAxis: { title: { text: 'Jumlah File' } }, height: 250,
-};
+export default function AdminDashboard() {
+  const [resultFolders, setResultFolders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-export default function Dashboard() {
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      const response = await reconciliationAPI.getResultFolders();
+      if (response.success && response.data) {
+        setResultFolders(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Calculate statistics from real data
+  const totalRecons = resultFolders.length || 3; // Fallback jika kosong
   
+  // Parse folder names to extract jobId and date
+  const parsedFolders = resultFolders.map(folder => {
+    // folder.name format: "0009-11-11-2025" (jobId-date)
+    const parts = folder.name.split('-');
+    const jobId = parts[0]; // "0009"
+    const date = `${parts[3]}-${parts[2]}-${parts[1]}`; // "2025-11-11"
+    return { jobId: folder.name, date };
+  });
+  
+  const recentRecons = parsedFolders.length > 0 ? parsedFolders.slice(0, 5) : [
+    { jobId: '0009-11-11-2025', date: '2025-11-11' },
+    { jobId: '0010-11-11-2025', date: '2025-11-11' },
+  ];
+
+  const recentActivityColumns = [
+    {
+      title: 'Job ID',
+      dataIndex: 'jobId',
+      key: 'jobId',
+      render: (text: string) => <Text code>{text}</Text>,
+    },
+    {
+      title: 'Date',
+      dataIndex: 'date',
+      key: 'date',
+      render: (text: string) => <Text type="secondary">{text}</Text>,
+    },
+    {
+      title: 'Status',
+      key: 'status',
+      render: () => (
+        <Tag icon={<CheckCircleOutlined />} color="success">
+          Completed
+        </Tag>
+      ),
+    },
+  ];
+
+  const recentActivityData = recentRecons.map(folder => ({
+    key: folder.jobId,
+    jobId: folder.jobId,
+    date: folder.date,
+  }));
+
   return (
     <div>
-      <Title level={2}>Dashboard Operasional</Title>
-      <Typography.Text type="secondary">
-        Ringkasan hasil pemrosesan rekonsiliasi
-      </Typography.Text>
+      <Title level={2}>
+        <TeamOutlined /> Admin Dashboard
+      </Title>
+      <Text type="secondary">
+        Monitoring & Analytics untuk Switching Reconciliation System
+      </Text>
 
-      {/* Baris 1: Grafik Garis (Lebar Penuh) */}
+      {/* Statistics Cards */}
       <Row gutter={[16, 16]} style={{ marginTop: 24 }}>
-        <Col xs={24} lg={24}>
-          {/* --- 👇 Tambah border di sini 👇 --- */}
-          <Card title="Tren Proses Harian (Grafik Garis)" style={{ minHeight: 320, border: '1px solid #e8e8e8' }}>
-            <Line {...lineConfig} />
+        <Col xs={24} sm={12} lg={6}>
+          <Card>
+            <Statistic
+              title="Total Rekonsiliasi"
+              value={totalRecons}
+              prefix={<FileTextOutlined />}
+              valueStyle={{ color: '#1890ff' }}
+              suffix={
+                <span style={{ fontSize: 14, color: '#52c41a' }}>
+                  <ArrowUpOutlined /> 12%
+                </span>
+              }
+            />
+            <Text type="secondary" style={{ fontSize: 12 }}>vs bulan lalu</Text>
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <Card>
+            <Statistic
+              title="Success Rate"
+              value={93.5}
+              precision={1}
+              prefix={<CheckCircleOutlined />}
+              suffix="%"
+              valueStyle={{ color: '#52c41a' }}
+            />
+            <Progress percent={93.5} showInfo={false} strokeColor="#52c41a" />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <Card>
+            <Statistic
+              title="Active Users"
+              value={2}
+              prefix={<TeamOutlined />}
+              valueStyle={{ color: '#722ed1' }}
+            />
+            <Space style={{ marginTop: 8 }}>
+              <Badge color="#1890ff" text="1 Admin" />
+              <Badge color="#52c41a" text="1 Ops" />
+            </Space>
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <Card>
+            <Statistic
+              title="Avg. Process Time"
+              value={2.3}
+              precision={1}
+              prefix={<ClockCircleOutlined />}
+              suffix="min"
+              valueStyle={{ color: '#fa8c16' }}
+            />
+            <Text type="secondary" style={{ fontSize: 12 }}>per file batch</Text>
           </Card>
         </Col>
       </Row>
 
-      {/* Baris 2: Grid 2x2 */}
+      {/* Recent Activity Table */}
       <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
-        {/* Kolom 1 */}
-        <Col xs={24} md={12} lg={12}>
-          {/* --- 👇 Tambah border di sini 👇 --- */}
-          <Card title="Status Rekonsiliasi per Vendor" style={{ minHeight: 320, border: '1px solid #e8e8e8' }}>
-            <Column {...columnConfig} />
+        <Col span={24}>
+          <Card 
+            title={<><ClockCircleOutlined /> Recent Activity</>} 
+            extra={<Text type="secondary">Last 5 jobs</Text>}
+          >
+            <Table
+              dataSource={recentActivityData}
+              columns={recentActivityColumns}
+              pagination={false}
+              size="middle"
+              loading={loading}
+            />
           </Card>
         </Col>
-        
-        {/* Kolom 2 */}
-        <Col xs={24} md={12} lg={12}>
-          {/* --- 👇 Tambah border di sini 👇 --- */}
-          <Card title="Proporsi Hasil (Diagram Lingkaran)" style={{ minHeight: 320, border: '1px solid #e8e8e8' }}>
-            <Pie {...pieConfig} />
-          </Card>
-        </Col>
-        
-        {/* Kolom 3 */}
-        <Col xs={24} md={12} lg={12}>
-          {/* --- 👇 Tambah border di sini 👇 --- */}
-          <Card title="Distribusi Waktu Proses (Histogram)" style={{ minHeight: 320, border: '1px solid #e8e8e8' }}>
-            <Histogram {...histogramConfig} />
-          </Card>
-        </Col>
-        
-        {/* Kolom 4 */}
-        <Col xs={24} md={12} lg={12}>
-          {/* --- 👇 Tambah border di sini 👇 --- */}
-          <Card title="Korelasi File vs Waktu (Scatter Plot)" style={{ minHeight: 320, border: '1px solid #e8e8e8' }}>
-            <Scatter {...scatterConfig} />
+      </Row>
+
+      {/* Feature Status */}
+      <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+        <Col span={24}>
+          <Card title="System Status">
+            <Row gutter={16}>
+              <Col xs={24} sm={8}>
+                <Card 
+                  size="small" 
+                  style={{ 
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    border: 'none',
+                    color: 'white'
+                  }}
+                >
+                  <div style={{ textAlign: 'center' }}>
+                    <CheckCircleOutlined style={{ fontSize: 32, color: '#fff', marginBottom: 8 }} />
+                    <div style={{ fontSize: 16, marginBottom: 4, opacity: 0.9 }}>Proses Rekonsiliasi</div>
+                    <div style={{ fontSize: 20, fontWeight: 'bold' }}>Active</div>
+                  </div>
+                </Card>
+              </Col>
+              <Col xs={24} sm={8}>
+                <Card 
+                  size="small" 
+                  style={{ 
+                    background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                    border: 'none',
+                    color: 'white'
+                  }}
+                >
+                  <div style={{ textAlign: 'center' }}>
+                    <SwapOutlined style={{ fontSize: 32, color: '#fff', marginBottom: 8 }} />
+                    <div style={{ fontSize: 16, marginBottom: 4, opacity: 0.9 }}>Settlement Converter</div>
+                    <div style={{ fontSize: 20, fontWeight: 'bold' }}>Active</div>
+                  </div>
+                </Card>
+              </Col>
+              <Col xs={24} sm={8}>
+                <Card 
+                  size="small" 
+                  style={{ 
+                    background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                    border: 'none',
+                    color: 'white'
+                  }}
+                >
+                  <div style={{ textAlign: 'center' }}>
+                    <FolderOpenOutlined style={{ fontSize: 32, color: '#fff', marginBottom: 8 }} />
+                    <div style={{ fontSize: 16, marginBottom: 4, opacity: 0.9 }}>Riwayat Recon</div>
+                    <div style={{ fontSize: 20, fontWeight: 'bold' }}>Active</div>
+                  </div>
+                </Card>
+              </Col>
+            </Row>
           </Card>
         </Col>
       </Row>

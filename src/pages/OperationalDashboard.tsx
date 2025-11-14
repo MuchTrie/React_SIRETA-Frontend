@@ -1,8 +1,23 @@
-import React from 'react';
-// Pastikan path ini benar menunjuk ke komponen Dashboard Anda
-import Dashboard from '../components/Dashboard'; 
+import { Result, Button } from 'antd';
+import { useNavigate } from 'react-router-dom';
+import { FileTextOutlined } from '@ant-design/icons';
 
 export default function OperationalDashboard() {
-  // Komponen ini hanya merender komponen Dashboard Anda yang sudah ada
-  return <Dashboard />;
+  const navigate = useNavigate();
+
+  return (
+    <Result
+      icon={<FileTextOutlined style={{ color: '#1890ff' }} />}
+      title="Selamat Datang, Operasional!"
+      subTitle="Pilih menu di samping untuk mulai bekerja dengan sistem rekonsiliasi."
+      extra={[
+        <Button type="primary" key="rekon" onClick={() => navigate('/proses-rekonsiliasi')}>
+          Proses Rekonsiliasi
+        </Button>,
+        <Button key="history" onClick={() => navigate('/riwayat-recon')}>
+          Lihat Riwayat
+        </Button>,
+      ]}
+    />
+  );
 }

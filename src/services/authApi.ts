@@ -26,8 +26,8 @@ export const loginRequest = async (email: string, pass: string): Promise<LoginRe
     email: email, 
     password: pass 
   });
-  // Asumsi backend mengembalikan data dalam format { success: true, data: { token: "...", user: {...} } }
-  return response.data.data;
+  // Backend Go mengembalikan langsung { token: "...", user: {...} }
+  return response.data;
 };
 
 /**

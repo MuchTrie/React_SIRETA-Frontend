@@ -1,11 +1,9 @@
 import React from 'react';
-import { Card, Table, Tag, Statistic, Row, Col, Typography, Tabs, Button, Space } from 'antd';
+import { Card, Statistic, Row, Col, Typography, Button, Space } from 'antd';
 import { DownloadOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
-import type { ReconciliationResult, ReconciliationData, SettlementData } from '../types';
-import type { ColumnsType } from 'antd/es/table';
+import type { ReconciliationResult } from '../types';
 
 const { Title, Text } = Typography;
-const { TabPane } = Tabs;
 
 interface ResultsDisplayProps {
   result: ReconciliationResult;
@@ -14,149 +12,6 @@ interface ResultsDisplayProps {
 }
 
 const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onDownload, onReset }) => {
-  // Columns for reconciliation table
-  const reconColumns: ColumnsType<ReconciliationData> = [
-    {
-      title: 'RRN',
-      dataIndex: 'rrn',
-      key: 'rrn',
-      fixed: 'left',
-      width: 150,
-    },
-    {
-      title: 'Reff',
-      dataIndex: 'reff',
-      key: 'reff',
-      width: 120,
-    },
-    {
-      title: 'Status',
-      dataIndex: 'match_status',
-      key: 'match_status',
-      width: 150,
-      render: (status: string) => {
-        let color = 'green';
-        let icon = <CheckCircleOutlined />;
-        if (status === 'ONLY_IN_CORE') {
-          color = 'orange';
-          icon = <CloseCircleOutlined />;
-        } else if (status === 'ONLY_IN_SWITCHING') {
-          color = 'red';
-          icon = <CloseCircleOutlined />;
-        }
-        return (
-          <Tag color={color} icon={icon}>
-            {status.replace(/_/g, ' ')}
-          </Tag>
-        );
-      },
-    },
-    {
-      title: 'Source',
-      dataIndex: 'source',
-      key: 'source',
-      width: 100,
-      render: (source: string) => (
-        <Tag color={source === 'BOTH' ? 'blue' : source === 'CORE' ? 'cyan' : 'purple'}>
-          {source}
-        </Tag>
-      ),
-    },
-    {
-      title: 'Merchant PAN',
-      dataIndex: 'merchant_pan',
-      key: 'merchant_pan',
-      width: 150,
-    },
-    {
-      title: 'Merchant Criteria',
-      dataIndex: 'merchant_criteria',
-      key: 'merchant_criteria',
-      width: 150,
-    },
-    {
-      title: 'Invoice Number',
-      dataIndex: 'invoice_number',
-      key: 'invoice_number',
-      width: 150,
-    },
-    {
-      title: 'Created Date',
-      dataIndex: 'created_date',
-      key: 'created_date',
-      width: 120,
-    },
-    {
-      title: 'Created Time',
-      dataIndex: 'created_time',
-      key: 'created_time',
-      width: 120,
-    },
-    {
-      title: 'Process Code',
-      dataIndex: 'process_code',
-      key: 'process_code',
-      width: 120,
-    },
-  ];
-
-  // Columns for settlement table
-  const settlementColumns: ColumnsType<SettlementData> = [
-    {
-      title: 'RRN',
-      dataIndex: 'rrn',
-      key: 'rrn',
-      fixed: 'left',
-      width: 150,
-    },
-    {
-      title: 'Reff',
-      dataIndex: 'reff',
-      key: 'reff',
-      width: 120,
-    },
-    {
-      title: 'Status',
-      dataIndex: 'match_status',
-      key: 'match_status',
-      width: 150,
-      render: (status: string) => {
-        let color = 'green';
-        let icon = <CheckCircleOutlined />;
-        if (status === 'ONLY_IN_CORE') {
-          color = 'orange';
-          icon = <CloseCircleOutlined />;
-        } else if (status === 'ONLY_IN_SWITCHING') {
-          color = 'red';
-          icon = <CloseCircleOutlined />;
-        }
-        return (
-          <Tag color={color} icon={icon}>
-            {status.replace(/_/g, ' ')}
-          </Tag>
-        );
-      },
-    },
-    {
-      title: 'Merchant PAN',
-      dataIndex: 'merchant_pan',
-      key: 'merchant_pan',
-      width: 150,
-    },
-    {
-      title: 'Interchange Fee',
-      dataIndex: 'interchange_fee',
-      key: 'interchange_fee',
-      width: 150,
-    },
-    {
-      title: 'Convenience Fee',
-      dataIndex: 'convenience_fee',
-      key: 'convenience_fee',
-      width: 150,
-    },
-  ];
-
   return (
     <div>
       <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
@@ -242,71 +97,100 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onDownload, onR
           <Row gutter={16} style={{ marginBottom: 16 }}>
             {vendor.recon_results && vendor.recon_results.length > 0 && (
               <>
-                <Col span={6}>
-                  <Statistic
-                    title="Recon Match"
-                    value={vendor.recon_match_count}
-                    prefix={<CheckCircleOutlined />}
-                    valueStyle={{ color: '#52c41a' }}
-                  />
+                <Col xs={24} sm={12} md={6}>
+                  <Card size="small" style={{ backgroundColor: '#f6ffed' }}>
+                    <Statistic
+                      title="Recon Total"
+                      value={vendor.recon_results.length}
+                      valueStyle={{ color: '#1890ff', fontSize: 20 }}
+                    />
+                  </Card>
                 </Col>
-                <Col span={6}>
-                  <Statistic
-                    title="Recon Mismatch"
-                    value={vendor.recon_mismatch_count}
-                    prefix={<CloseCircleOutlined />}
-                    valueStyle={{ color: '#ff4d4f' }}
-                  />
+                <Col xs={24} sm={12} md={6}>
+                  <Card size="small" style={{ backgroundColor: '#f6ffed' }}>
+                    <Statistic
+                      title="Recon Match"
+                      value={vendor.recon_match_count}
+                      prefix={<CheckCircleOutlined />}
+                      valueStyle={{ color: '#52c41a', fontSize: 20 }}
+                    />
+                  </Card>
                 </Col>
-              </>
-            )}
-            {vendor.settlement_results && vendor.settlement_results.length > 0 && (
-              <>
-                <Col span={6}>
-                  <Statistic
-                    title="Settlement Match"
-                    value={vendor.settlement_match_count}
-                    prefix={<CheckCircleOutlined />}
-                    valueStyle={{ color: '#52c41a' }}
-                  />
+                <Col xs={24} sm={12} md={6}>
+                  <Card size="small" style={{ backgroundColor: '#fff7e6' }}>
+                    <Statistic
+                      title="Only in Core"
+                      value={vendor.recon_results.filter(d => d.match_status === 'ONLY_IN_CORE').length}
+                      prefix={<CloseCircleOutlined />}
+                      valueStyle={{ color: '#faad14', fontSize: 20 }}
+                    />
+                  </Card>
                 </Col>
-                <Col span={6}>
-                  <Statistic
-                    title="Settlement Mismatch"
-                    value={vendor.settlement_mismatch_count}
-                    prefix={<CloseCircleOutlined />}
-                    valueStyle={{ color: '#ff4d4f' }}
-                  />
+                <Col xs={24} sm={12} md={6}>
+                  <Card size="small" style={{ backgroundColor: '#fff1f0' }}>
+                    <Statistic
+                      title="Only in Switching"
+                      value={vendor.recon_results.filter(d => d.match_status === 'ONLY_IN_SWITCHING').length}
+                      prefix={<CloseCircleOutlined />}
+                      valueStyle={{ color: '#ff4d4f', fontSize: 20 }}
+                    />
+                  </Card>
                 </Col>
               </>
             )}
           </Row>
 
-          {/* Tabs for Recon and Settlement */}
-          <Tabs defaultActiveKey="recon">
-            {vendor.recon_results && vendor.recon_results.length > 0 && (
-              <TabPane tab={`Reconciliation (${vendor.recon_results.length})`} key="recon">
-                <Table
-                  columns={reconColumns}
-                  dataSource={vendor.recon_results}
-                  rowKey="rrn"
-                  scroll={{ x: 1500 }}
-                  pagination={{ pageSize: 10, showSizeChanger: true, showTotal: (total) => `Total ${total} records` }}
-                />
-              </TabPane>
-            )}
-            {vendor.settlement_results && vendor.settlement_results.length > 0 && (
-              <TabPane tab={`Settlement (${vendor.settlement_results.length})`} key="settlement">
-                <Table
-                  columns={settlementColumns}
-                  dataSource={vendor.settlement_results}
-                  rowKey="rrn"
-                  scroll={{ x: 1200 }}
-                  pagination={{ pageSize: 10, showSizeChanger: true, showTotal: (total) => `Total ${total} records` }}
-                />
-              </TabPane>
-            )}
-          </Tabs>
+          {vendor.settlement_results && vendor.settlement_results.length > 0 && (
+            <Row gutter={16} style={{ marginBottom: 16 }}>
+              <Col xs={24} sm={12} md={6}>
+                <Card size="small" style={{ backgroundColor: '#f6ffed' }}>
+                  <Statistic
+                    title="Settlement Total"
+                    value={vendor.settlement_results.length}
+                    valueStyle={{ color: '#1890ff', fontSize: 20 }}
+                  />
+                </Card>
+              </Col>
+              <Col xs={24} sm={12} md={6}>
+                <Card size="small" style={{ backgroundColor: '#f6ffed' }}>
+                  <Statistic
+                    title="Settlement Match"
+                    value={vendor.settlement_match_count}
+                    prefix={<CheckCircleOutlined />}
+                    valueStyle={{ color: '#52c41a', fontSize: 20 }}
+                  />
+                </Card>
+              </Col>
+              <Col xs={24} sm={12} md={6}>
+                <Card size="small" style={{ backgroundColor: '#fff7e6' }}>
+                  <Statistic
+                    title="Only in Core"
+                    value={vendor.settlement_results.filter(d => d.match_status === 'ONLY_IN_CORE').length}
+                    prefix={<CloseCircleOutlined />}
+                    valueStyle={{ color: '#faad14', fontSize: 20 }}
+                  />
+                </Card>
+              </Col>
+              <Col xs={24} sm={12} md={6}>
+                <Card size="small" style={{ backgroundColor: '#fff1f0' }}>
+                  <Statistic
+                    title="Only in Switching"
+                    value={vendor.settlement_results.filter(d => d.match_status === 'ONLY_IN_SWITCHING').length}
+                    prefix={<CloseCircleOutlined />}
+                    valueStyle={{ color: '#ff4d4f', fontSize: 20 }}
+                  />
+                </Card>
+              </Col>
+            </Row>
+          )}
+
+          {/* Info Message */}
+          <Card size="small" style={{ backgroundColor: '#e6f7ff', borderColor: '#91d5ff', marginTop: 16 }}>
+            <Text strong style={{ color: '#1890ff' }}>
+              ℹ️ Rekonsiliasi selesai! File hasil telah disimpan. 
+              Untuk melihat detail data, silakan buka menu "📊 Riwayat Hasil Rekonsiliasi"
+            </Text>
+          </Card>
         </Card>
       ))}
     </div>
