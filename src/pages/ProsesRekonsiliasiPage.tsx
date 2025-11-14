@@ -46,9 +46,29 @@ export default function ProsesRekonsiliasiPage() {
     }
   };
 
-  const handleDownload = (url: string) => {
-    // Pastikan URL dari backend sudah benar
-    window.open(`http://localhost:8080${url}`, '_blank');
+  const handleDownload = async (url: string) => {
+    try {
+      message.loading({ content: 'Mengunduh file...', key: 'download' });
+      // Extract jobId and filename from URL path
+      // URL format: /api/download/{jobId}/{filename}
+      const urlParts = url.split('/');
+      const filename = urlParts[urlParts.length - 1];
+      const jobId = urlParts[urlParts.length - 2];
+      
+      const blob = await reconciliationAPI.downloadResult(jobId, filename);
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+      message.success({ content: `File ${filename} berhasil di-download!`, key: 'download' });
+    } catch (error) {
+      console.error('Download error:', error);
+      message.error({ content: 'Gagal mengunduh file', key: 'download' });
+    }
   };
 
   const handleReset = () => {

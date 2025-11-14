@@ -275,10 +275,23 @@ const ResultHistory: React.FC = () => {
     }
   };
 
-  const handleDownload = (folderName: string, filename: string) => {
-    const url = reconciliationAPI.downloadResult(folderName, filename);
-    window.open(url, '_blank');
-    message.success(`Downloading ${filename}`);
+  const handleDownload = async (folderName: string, filename: string) => {
+    try {
+      message.loading({ content: 'Mengunduh file...', key: 'download' });
+      const blob = await reconciliationAPI.downloadResult(folderName, filename);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      message.success({ content: `File ${filename} berhasil di-download!`, key: 'download' });
+    } catch (error) {
+      console.error('Download error:', error);
+      message.error({ content: 'Gagal mengunduh file', key: 'download' });
+    }
   };
 
   const getFilterKey = (vendor: string, type: string) => {

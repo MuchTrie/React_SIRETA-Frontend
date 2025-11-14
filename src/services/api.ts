@@ -1,8 +1,5 @@
 import apiClient from './apiClient';
 import type { ReconciliationResult, UploadFiles } from '../types';
-import axios from 'axios';
-
-const API_BASE_URL = 'http://localhost:8080/api';
 
 interface ProcessResponse {
   success: boolean;
@@ -109,11 +106,13 @@ export const reconciliationAPI = {
   },
 
   /**
-   * Download result file
+   * Download result file with proper authentication
    */
-  downloadResult: (jobId: string, filename: string): string => {
-    const token = localStorage.getItem('token');
-    return `${API_BASE_URL}/download/${jobId}/${filename}?token=${token}`;
+  downloadResult: async (jobId: string, filename: string): Promise<Blob> => {
+    const response = await apiClient.get(`/download/${jobId}/${filename}`, {
+      responseType: 'blob',
+    });
+    return response.data;
   },
 };
 
@@ -143,10 +142,12 @@ export const settlementAPI = {
   },
 
   /**
-   * Download converted file
+   * Download converted file with proper authentication
    */
-  downloadConverted: (filename: string): string => {
-    const token = localStorage.getItem('token');
-    return `${API_BASE_URL}/download/converted/${filename}?token=${token}`;
+  downloadConverted: async (filename: string): Promise<Blob> => {
+    const response = await apiClient.get(`/download/converted/${filename}`, {
+      responseType: 'blob',
+    });
+    return response.data;
   },
 };

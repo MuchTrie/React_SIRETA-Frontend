@@ -106,16 +106,24 @@ const SettlementConverter: React.FC = () => {
     }
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (conversionResult?.data?.filename) {
-      const url = settlementAPI.downloadConverted(conversionResult.data.filename);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = conversionResult.data.filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      message.success('File berhasil di-download!');
+      try {
+        message.loading({ content: 'Mengunduh file...', key: 'download' });
+        const blob = await settlementAPI.downloadConverted(conversionResult.data.filename);
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = conversionResult.data.filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        message.success({ content: 'File berhasil di-download!', key: 'download' });
+      } catch (error) {
+        console.error('Download error:', error);
+        message.error({ content: 'Gagal mengunduh file', key: 'download' });
+      }
     }
   };
 
@@ -381,15 +389,23 @@ const SettlementConverter: React.FC = () => {
                   <Button
                     type="primary"
                     icon={<DownloadOutlined />}
-                    onClick={() => {
-                      const url = `http://localhost:8080${file.download_url}`;
-                      const link = document.createElement('a');
-                      link.href = url;
-                      link.download = file.filename;
-                      document.body.appendChild(link);
-                      link.click();
-                      document.body.removeChild(link);
-                      message.success('File berhasil di-download!');
+                    onClick={async () => {
+                      try {
+                        message.loading({ content: 'Mengunduh file...', key: 'download' });
+                        const blob = await settlementAPI.downloadConverted(file.filename);
+                        const url = window.URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = file.filename;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        window.URL.revokeObjectURL(url);
+                        message.success({ content: 'File berhasil di-download!', key: 'download' });
+                      } catch (error) {
+                        console.error('Download error:', error);
+                        message.error({ content: 'Gagal mengunduh file', key: 'download' });
+                      }
                     }}
                   >
                     Download
