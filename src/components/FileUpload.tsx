@@ -9,6 +9,7 @@ import {
   LoadingOutlined 
 } from '@ant-design/icons';
 import type { UploadFile } from 'antd';
+import { useTheme } from '../context/ThemeContext';
 
 const { Title, Text, Paragraph } = Typography;
 const { Dragger } = Upload;
@@ -38,9 +39,27 @@ const detectVendor = (filename: string): string | null => {
 }
 
 const FileUpload: React.FC<FileUploadProps> = ({ onUpload, loading, uploadProgress, processingStage }) => {
+  const { theme } = useTheme();
   const [coreFiles, setCoreFiles] = useState<UploadFile[]>([]);
   const [reconFiles, setReconFiles] = useState<UploadFile[]>([]);
   const [settlementFiles, setSettlementFiles] = useState<UploadFile[]>([]);
+
+  // Helper function untuk mendapatkan warna berdasarkan tema
+  const getThemeColors = () => {
+    if (theme === 'dark') {
+      return {
+        infoBg: '#25254f',
+        summaryBg: '#2d2d4a',
+      };
+    } else {
+      return {
+        infoBg: '#f5f5f5',
+        summaryBg: '#fafafa',
+      };
+    }
+  };
+
+  const colors = getThemeColors();
 
   // Auto-categorize files by vendor
   const categorizeFilesByVendor = (files: UploadFile[]): Record<string, UploadFile[]> => {
@@ -262,7 +281,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUpload, loading, uploadProgre
             </Dragger>
 
             {reconFiles.length > 0 && (
-              <div style={{ marginTop: 16, padding: 12, background: '#f5f5f5', borderRadius: 4 }}>
+              <div style={{ marginTop: 16, padding: 12, background: colors.infoBg, borderRadius: 4 }}>
                 <Text strong style={{ display: 'block', marginBottom: 8 }}>Auto-Detected:</Text>
                 {renderFilesByVendor(reconByVendor)}
                 {reconByVendor.unknown.length > 0 && (
@@ -332,7 +351,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUpload, loading, uploadProgre
             </Dragger>
 
             {settlementFiles.length > 0 && (
-              <div style={{ marginTop: 16, padding: 12, background: '#f5f5f5', borderRadius: 4 }}>
+              <div style={{ marginTop: 16, padding: 12, background: colors.infoBg, borderRadius: 4 }}>
                 <Text strong style={{ display: 'block', marginBottom: 8 }}>Auto-Detected:</Text>
                 {renderFilesByVendor(settlementByVendor)}
                 {settlementByVendor.unknown.length > 0 && (
@@ -357,7 +376,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUpload, loading, uploadProgre
       {(coreFiles.length > 0 || hasVendorFiles) && (
         <Card 
           title="📊 Summary Upload"
-          style={{ marginBottom: 16, background: '#fafafa' }}
+          style={{ marginBottom: 16, background: colors.summaryBg }}
           size="small"
         >
           <Row gutter={16}>

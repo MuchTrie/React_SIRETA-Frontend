@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, Statistic, Row, Col, Typography, Button, Space } from 'antd';
 import { DownloadOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import type { ReconciliationResult } from '../types';
+import { useTheme } from '../context/ThemeContext';
 
 const { Title, Text } = Typography;
 
@@ -12,6 +13,29 @@ interface ResultsDisplayProps {
 }
 
 const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onDownload, onReset }) => {
+  const { theme } = useTheme();
+
+  // Helper function untuk mendapatkan warna berdasarkan tema
+  const getThemeColors = () => {
+    if (theme === 'dark') {
+      return {
+        successBg: '#162312',
+        warningBg: '#2b2111',
+        errorBg: '#2f1515',
+        infoBg: '#111d2c',
+      };
+    } else {
+      return {
+        successBg: '#f6ffed',
+        warningBg: '#fff7e6',
+        errorBg: '#fff1f0',
+        infoBg: '#e6f7ff',
+      };
+    }
+  };
+
+  const colors = getThemeColors();
+
   return (
     <div>
       <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
@@ -98,7 +122,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onDownload, onR
             {vendor.recon_results && vendor.recon_results.length > 0 && (
               <>
                 <Col xs={24} sm={12} md={6}>
-                  <Card size="small" style={{ backgroundColor: '#f6ffed' }}>
+                  <Card size="small" style={{ backgroundColor: colors.successBg }}>
                     <Statistic
                       title="Recon Total"
                       value={vendor.recon_results.length}
@@ -107,7 +131,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onDownload, onR
                   </Card>
                 </Col>
                 <Col xs={24} sm={12} md={6}>
-                  <Card size="small" style={{ backgroundColor: '#f6ffed' }}>
+                  <Card size="small" style={{ backgroundColor: colors.successBg }}>
                     <Statistic
                       title="Recon Match"
                       value={vendor.recon_match_count}
@@ -117,7 +141,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onDownload, onR
                   </Card>
                 </Col>
                 <Col xs={24} sm={12} md={6}>
-                  <Card size="small" style={{ backgroundColor: '#fff7e6' }}>
+                  <Card size="small" style={{ backgroundColor: colors.warningBg }}>
                     <Statistic
                       title="Only in Core"
                       value={vendor.recon_results.filter(d => d.match_status === 'ONLY_IN_CORE').length}
@@ -127,7 +151,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onDownload, onR
                   </Card>
                 </Col>
                 <Col xs={24} sm={12} md={6}>
-                  <Card size="small" style={{ backgroundColor: '#fff1f0' }}>
+                  <Card size="small" style={{ backgroundColor: colors.errorBg }}>
                     <Statistic
                       title="Only in Switching"
                       value={vendor.recon_results.filter(d => d.match_status === 'ONLY_IN_SWITCHING').length}
@@ -143,7 +167,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onDownload, onR
           {vendor.settlement_results && vendor.settlement_results.length > 0 && (
             <Row gutter={16} style={{ marginBottom: 16 }}>
               <Col xs={24} sm={12} md={6}>
-                <Card size="small" style={{ backgroundColor: '#f6ffed' }}>
+                <Card size="small" style={{ backgroundColor: colors.successBg }}>
                   <Statistic
                     title="Settlement Total"
                     value={vendor.settlement_results.length}
@@ -152,7 +176,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onDownload, onR
                 </Card>
               </Col>
               <Col xs={24} sm={12} md={6}>
-                <Card size="small" style={{ backgroundColor: '#f6ffed' }}>
+                <Card size="small" style={{ backgroundColor: colors.successBg }}>
                   <Statistic
                     title="Settlement Match"
                     value={vendor.settlement_match_count}
@@ -162,7 +186,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onDownload, onR
                 </Card>
               </Col>
               <Col xs={24} sm={12} md={6}>
-                <Card size="small" style={{ backgroundColor: '#fff7e6' }}>
+                <Card size="small" style={{ backgroundColor: colors.warningBg }}>
                   <Statistic
                     title="Only in Core"
                     value={vendor.settlement_results.filter(d => d.match_status === 'ONLY_IN_CORE').length}
@@ -172,7 +196,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onDownload, onR
                 </Card>
               </Col>
               <Col xs={24} sm={12} md={6}>
-                <Card size="small" style={{ backgroundColor: '#fff1f0' }}>
+                <Card size="small" style={{ backgroundColor: colors.errorBg }}>
                   <Statistic
                     title="Only in Switching"
                     value={vendor.settlement_results.filter(d => d.match_status === 'ONLY_IN_SWITCHING').length}
@@ -185,7 +209,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onDownload, onR
           )}
 
           {/* Info Message */}
-          <Card size="small" style={{ backgroundColor: '#e6f7ff', borderColor: '#91d5ff', marginTop: 16 }}>
+          <Card size="small" style={{ backgroundColor: colors.infoBg, borderColor: '#91d5ff', marginTop: 16 }}>
             <Text strong style={{ color: '#1890ff' }}>
               ℹ️ Rekonsiliasi selesai! File hasil telah disimpan. 
               Untuk melihat detail data, silakan buka menu "📊 Riwayat Hasil Rekonsiliasi"
