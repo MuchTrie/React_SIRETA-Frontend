@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Card, Select, Button, Space, Typography, Empty, Tag, message, Tabs, Statistic, Row, Col, Spin, Radio } from 'antd';
-import { ReloadOutlined, FolderOpenOutlined, DownloadOutlined, CheckOutlined, CloseOutlined, FilterOutlined } from '@ant-design/icons';
+import { ReloadOutlined, FolderOpenOutlined, DownloadOutlined, CheckCircleOutlined, CloseCircleOutlined, FilterOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { reconciliationAPI } from '../services/api';
 import { useTheme } from '../context/ThemeContext';
@@ -36,9 +36,11 @@ interface ReconciliationData {
 
 interface SettlementData {
   rrn: string;
+  amount?: number;
   reff: string;
   status: string;
   match_status: string;
+  source: string;
   merchant_pan: string;
   interchange_fee: string;
   convenience_fee?: string;
@@ -373,13 +375,13 @@ const ResultHistory: React.FC = () => {
       width: 150,
       render: (status: string) => {
         let color = 'green';
-        let icon = <CheckOutlined />;
+        let icon = <CheckCircleOutlined />;
         if (status === 'ONLY_IN_CORE') {
           color = 'orange';
-          icon = <CloseOutlined />;
+          icon = <CloseCircleOutlined />;
         } else if (status === 'ONLY_IN_SWITCHING') {
           color = 'red';
-          icon = <CloseOutlined />;
+          icon = <CloseCircleOutlined />;
         }
         return (
           <Tag color={color} icon={icon}>
@@ -447,6 +449,22 @@ const ResultHistory: React.FC = () => {
       width: 150,
     },
     {
+      title: 'Amount',
+      dataIndex: 'amount',
+      key: 'amount',
+      width: 130,
+      render: (value: number | undefined) => {
+        if (value === undefined || value === null || value === 0) {
+          return '-';
+        }
+        return new Intl.NumberFormat('id-ID', {
+          style: 'currency',
+          currency: 'IDR',
+          minimumFractionDigits: 2,
+        }).format(value);
+      },
+    },
+    {
       title: 'Reff',
       dataIndex: 'reff',
       key: 'reff',
@@ -459,13 +477,13 @@ const ResultHistory: React.FC = () => {
       width: 150,
       render: (status: string) => {
         let color = 'green';
-        let icon = <CheckOutlined />;
+        let icon = <CheckCircleOutlined />;
         if (status === 'ONLY_IN_CORE') {
           color = 'orange';
-          icon = <CloseOutlined />;
+          icon = <CloseCircleOutlined />;
         } else if (status === 'ONLY_IN_SWITCHING') {
           color = 'red';
-          icon = <CloseOutlined />;
+          icon = <CloseCircleOutlined />;
         }
         return (
           <Tag color={color} icon={icon}>
@@ -473,6 +491,17 @@ const ResultHistory: React.FC = () => {
           </Tag>
         );
       },
+    },
+    {
+      title: 'Source',
+      dataIndex: 'source',
+      key: 'source',
+      width: 100,
+      render: (source: string) => (
+        <Tag color={source === 'BOTH' ? 'blue' : source === 'CORE' ? 'cyan' : 'purple'}>
+          {source}
+        </Tag>
+      ),
     },
     {
       title: 'Merchant PAN',
@@ -665,7 +694,7 @@ const ResultHistory: React.FC = () => {
                                   <Statistic
                                     title="Recon Match"
                                     value={vendorData.reconData.filter(d => d.match_status === 'MATCH').length}
-                                    prefix={<CheckOutlined />}
+                                    prefix={<CheckCircleOutlined />}
                                     valueStyle={{ color: '#52c41a', fontSize: 20 }}
                                   />
                                 </Card>
@@ -675,7 +704,7 @@ const ResultHistory: React.FC = () => {
                                   <Statistic
                                     title="Only in Core"
                                     value={vendorData.reconData.filter(d => d.match_status === 'ONLY_IN_CORE').length}
-                                    prefix={<CloseOutlined />}
+                                    prefix={<CloseCircleOutlined />}
                                     valueStyle={{ color: '#faad14', fontSize: 20 }}
                                   />
                                 </Card>
@@ -685,7 +714,7 @@ const ResultHistory: React.FC = () => {
                                   <Statistic
                                     title="Only in Switching"
                                     value={vendorData.reconData.filter(d => d.match_status === 'ONLY_IN_SWITCHING').length}
-                                    prefix={<CloseOutlined />}
+                                    prefix={<CloseCircleOutlined />}
                                     valueStyle={{ color: '#ff4d4f', fontSize: 20 }}
                                   />
                                 </Card>
@@ -710,7 +739,7 @@ const ResultHistory: React.FC = () => {
                                 <Statistic
                                   title="Settlement Match"
                                   value={vendorData.settlementData.filter(d => d.match_status === 'MATCH').length}
-                                  prefix={<CheckOutlined />}
+                                  prefix={<CheckCircleOutlined />}
                                   valueStyle={{ color: '#52c41a', fontSize: 20 }}
                                 />
                               </Card>
@@ -720,7 +749,7 @@ const ResultHistory: React.FC = () => {
                                 <Statistic
                                   title="Only in Core"
                                   value={vendorData.settlementData.filter(d => d.match_status === 'ONLY_IN_CORE').length}
-                                  prefix={<CloseOutlined />}
+                                  prefix={<CloseCircleOutlined />}
                                   valueStyle={{ color: '#faad14', fontSize: 20 }}
                                 />
                               </Card>
@@ -730,7 +759,7 @@ const ResultHistory: React.FC = () => {
                                 <Statistic
                                   title="Only in Switching"
                                   value={vendorData.settlementData.filter(d => d.match_status === 'ONLY_IN_SWITCHING').length}
-                                  prefix={<CloseOutlined />}
+                                  prefix={<CloseCircleOutlined />}
                                   valueStyle={{ color: '#ff4d4f', fontSize: 20 }}
                                 />
                               </Card>
@@ -756,13 +785,13 @@ const ResultHistory: React.FC = () => {
                                 >
                                   <Radio.Button value="ALL">All</Radio.Button>
                                   <Radio.Button value="MATCH">
-                                    <CheckOutlined /> Match
+                                    <CheckCircleOutlined /> Match
                                   </Radio.Button>
                                   <Radio.Button value="ONLY_IN_CORE">
-                                    <CloseOutlined /> Only in Core
+                                    <CloseCircleOutlined /> Only in Core
                                   </Radio.Button>
                                   <Radio.Button value="ONLY_IN_SWITCHING">
-                                    <CloseOutlined /> Only in Switching
+                                    <CloseCircleOutlined /> Only in Switching
                                   </Radio.Button>
                                 </Radio.Group>
                                 <Button 
@@ -803,13 +832,13 @@ const ResultHistory: React.FC = () => {
                                 >
                                   <Radio.Button value="ALL">All</Radio.Button>
                                   <Radio.Button value="MATCH">
-                                    <CheckOutlined /> Match
+                                    <CheckCircleOutlined /> Match
                                   </Radio.Button>
                                   <Radio.Button value="ONLY_IN_CORE">
-                                    <CloseOutlined /> Only in Core
+                                    <CloseCircleOutlined /> Only in Core
                                   </Radio.Button>
                                   <Radio.Button value="ONLY_IN_SWITCHING">
-                                    <CloseOutlined /> Only in Switching
+                                    <CloseCircleOutlined /> Only in Switching
                                   </Radio.Button>
                                 </Radio.Group>
                                 <Button 
