@@ -10,14 +10,6 @@ export default function OperationalDashboard() {
       icon={<FileTextOutlined style={{ color: '#1890ff' }} />}
       title="Selamat Datang, Operasional!"
       subTitle="Pilih menu di samping untuk mulai bekerja dengan sistem rekonsiliasi."
-      extra={[
-        <Button type="primary" key="rekon" onClick={() => navigate('/proses-rekonsiliasi')}>
-          Proses Rekonsiliasi
-        </Button>,
-        <Button key="history" onClick={() => navigate('/riwayat-recon')}>
-          Lihat Riwayat
-        </Button>,
-      ]}
     />
   );
 }
