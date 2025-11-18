@@ -63,3 +63,32 @@ export interface UploadFiles {
   rintiReconFiles?: File | File[];
   rintiSettlementFiles?: File | File[];
 }
+
+// Duplicate Detection Types
+export interface DuplicateRecord {
+  rrn: string;
+  amount: number;
+  line_number: number;
+  source: string;
+  file_name: string;
+  vendor: string;
+  created_date: string;
+  created_time: string;
+}
+
+export interface DuplicateGroup {
+  rrn: string;
+  occurrence_count: number;
+  records: DuplicateRecord[];
+  total_amount: number;
+}
+
+export interface DuplicateReport {
+  job_id: string;
+  total_duplicates: number;
+  total_records: number;
+  core_duplicates: DuplicateGroup[];
+  recon_duplicates: DuplicateGroup[];
+  settle_duplicates: DuplicateGroup[];
+  generated_at: string;
+}

@@ -114,6 +114,24 @@ export const reconciliationAPI = {
     });
     return response.data;
   },
+
+  /**
+   * Get duplicate detection report
+   */
+  getDuplicateReport: async (jobId: string) => {
+    const response = await apiClient.get(`/duplicates/${jobId}`);
+    return response.data;
+  },
+
+  /**
+   * Download duplicate report CSV
+   */
+  downloadDuplicateReport: async (jobId: string): Promise<Blob> => {
+    const response = await apiClient.get(`/duplicates/${jobId}/download`, {
+      responseType: 'blob',
+    });
+    return response.data;
+  },
 };
 
 export const settlementAPI = {
