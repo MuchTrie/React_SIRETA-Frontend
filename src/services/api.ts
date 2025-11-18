@@ -150,4 +150,12 @@ export const settlementAPI = {
     });
     return response.data;
   },
+
+  /**
+   * Preview converted file
+   */
+  previewConverted: async (filename: string): Promise<ConversionResult> => {
+    const response = await apiClient.get(`/preview/converted/${filename}`);
+    return response.data;
+  },
 };

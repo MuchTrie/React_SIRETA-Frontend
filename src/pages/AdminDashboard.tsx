@@ -51,8 +51,7 @@ export default function AdminDashboard() {
   });
   
   const recentRecons = parsedFolders.length > 0 ? parsedFolders.slice(0, 5) : [
-    { jobId: '0009-11-11-2025', date: '2025-11-11' },
-    { jobId: '0010-11-11-2025', date: '2025-11-11' },
+    { jobId: '-', date: '-' }
   ];
 
   const recentActivityColumns = [

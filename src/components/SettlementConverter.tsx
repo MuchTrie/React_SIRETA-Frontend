@@ -37,6 +37,8 @@ const SettlementConverter: React.FC = () => {
   const [settlementFile, setSettlementFile] = useState<UploadFile | null>(null);
   const [conversionResult, setConversionResult] = useState<ConversionResult | null>(null);
   const [convertedFiles, setConvertedFiles] = useState<ConvertedFile[]>([]);
+  const [previewFile, setPreviewFile] = useState<ConversionResult | null>(null);
+  const [loadingPreview, setLoadingPreview] = useState(false);
 
   const uploadProps: UploadProps = {
     maxCount: 1,
@@ -127,9 +129,58 @@ const SettlementConverter: React.FC = () => {
     }
   };
 
+  const handlePreviewFile = async (filename: string) => {
+    setLoadingPreview(true);
+    try {
+      const response = await settlementAPI.previewConverted(filename);
+      if (response.success) {
+        setPreviewFile(response);
+        message.success('Preview file berhasil dimuat!');
+      } else {
+        message.error('Gagal memuat preview file');
+      }
+    } catch (error) {
+      console.error('Preview error:', error);
+      message.error('Gagal memuat preview file');
+    } finally {
+      setLoadingPreview(false);
+    }
+  };
+
+  const handleClosePreview = () => {
+    setPreviewFile(null);
+  };
+
   const handleReset = () => {
     setSettlementFile(null);
     setConversionResult(null);
+  };
+
+  // Helper function to split Merchant Name & Location
+  const splitMerchantNameLocation = (fullText: string) => {
+    if (!fullText || fullText.trim() === '') {
+      return { merchantName: '-', location: '-' };
+    }
+
+    // Remove extra spaces
+    const cleaned = fullText.trim().replace(/\s+/g, ' ');
+    
+    // Split by last space to separate name and location
+    // Assumes format: "MERCHANT NAME CITY COUNTRY" -> split at last 1-2 words as location
+    const parts = cleaned.split(' ');
+    
+    if (parts.length <= 1) {
+      return { merchantName: cleaned, location: '-' };
+    }
+
+    // Last 1-2 words as location (e.g., "JAKARTA ID" or "DEPOK ID")
+    const location = parts.slice(-2).join(' '); // Last 2 words
+    const merchantName = parts.slice(0, -2).join(' '); // Everything before
+
+    return {
+      merchantName: merchantName || parts[0], // Fallback to first word if empty
+      location: location || parts[parts.length - 1] // Fallback to last word
+    };
   };
 
   // Define columns based on settlement CSV structure
@@ -228,10 +279,24 @@ const SettlementConverter: React.FC = () => {
       width: 120,
     },
     {
-      title: 'Merchant Name & Location',
+      title: 'Merchant Name',
       dataIndex: 'Merchant_Name_Location',
-      key: 'Merchant_Name_Location',
-      width: 250,
+      key: 'Merchant_Name',
+      width: 200,
+      render: (text: string) => {
+        const { merchantName } = splitMerchantNameLocation(text);
+        return <Text>{merchantName}</Text>;
+      },
+    },
+    {
+      title: 'Location',
+      dataIndex: 'Merchant_Name_Location',
+      key: 'Location',
+      width: 150,
+      render: (text: string) => {
+        const { location } = splitMerchantNameLocation(text);
+        return <Text type="secondary">{location}</Text>;
+      },
     },
     {
       title: 'Convenience Fee',
@@ -387,6 +452,13 @@ const SettlementConverter: React.FC = () => {
               <List.Item
                 actions={[
                   <Button
+                    icon={<EyeOutlined />}
+                    onClick={() => handlePreviewFile(file.filename)}
+                    loading={loadingPreview}
+                  >
+                    Preview
+                  </Button>,
+                  <Button
                     type="primary"
                     icon={<DownloadOutlined />}
                     onClick={async () => {
@@ -427,6 +499,80 @@ const SettlementConverter: React.FC = () => {
           />
         )}
       </Card>
+
+      {/* Preview Modal for History Files */}
+      {previewFile?.data && (
+        <Card
+          title={
+            <Space>
+              <EyeOutlined />
+              <span>Preview File dari Riwayat</span>
+            </Space>
+          }
+          extra={
+            <Space>
+              <Button
+                type="primary"
+                icon={<DownloadOutlined />}
+                onClick={async () => {
+                  if (previewFile.data?.filename) {
+                    try {
+                      message.loading({ content: 'Mengunduh file...', key: 'download' });
+                      const blob = await settlementAPI.downloadConverted(previewFile.data.filename);
+                      const url = window.URL.createObjectURL(blob);
+                      const link = document.createElement('a');
+                      link.href = url;
+                      link.download = previewFile.data.filename;
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                      window.URL.revokeObjectURL(url);
+                      message.success({ content: 'File berhasil di-download!', key: 'download' });
+                    } catch (error) {
+                      console.error('Download error:', error);
+                      message.error({ content: 'Gagal mengunduh file', key: 'download' });
+                    }
+                  }
+                }}
+              >
+                Download CSV
+              </Button>
+              <Button onClick={handleClosePreview}>Tutup Preview</Button>
+            </Space>
+          }
+          style={{ marginTop: 16 }}
+        >
+          <Space direction="vertical" style={{ width: '100%' }}>
+            <Text strong>Nama File: </Text>
+            <Text>{previewFile.data.filename}</Text>
+
+            <Text strong>Total Records: </Text>
+            <Text>{previewFile.data.total_records.toLocaleString()}</Text>
+          </Space>
+
+          <Alert
+            message="Preview Terbatas"
+            description={`Menampilkan maksimal 100 baris pertama untuk menghindari browser crash. Total data: ${previewFile.data.total_records.toLocaleString()} records. Download file CSV untuk melihat semua data.`}
+            type="warning"
+            showIcon
+            style={{ marginTop: 16, marginBottom: 16 }}
+          />
+          
+          <Table
+            columns={tableColumns}
+            dataSource={previewFile.data.preview_records.map((record, index) => ({
+              ...record,
+              No: (index + 1).toString(),
+              key: index.toString(),
+            }))}
+            scroll={{ x: 2500, y: 400 }}
+            pagination={{ pageSize: 20 }}
+            size="small"
+            bordered
+            sticky
+          />
+        </Card>
+      )}
     </div>
   );
 };
