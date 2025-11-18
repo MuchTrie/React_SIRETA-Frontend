@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { jwtDecode } from 'jwt-decode';
-import { loginRequest } from '../services/authApi'; 
+import { loginRequest, registerRequest } from '../services/authApi'; 
 import apiClient from '../services/apiClient';
 // Impor API settings
 import { getSettings, FeatureSettings } from '../services/settingsApi'; 
@@ -136,31 +136,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Fungsi register
   const register = async (email: string, password: string, role: 'admin' | 'operasional') => {
     try {
-      const response = await fetch('http://localhost:8080/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password, role }),
-      });
+      const authData = await registerRequest(email, password, role);
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Registrasi gagal');
+      if (!authData || !authData.token) {
+        throw new Error('Invalid response from server');
       }
       
-      const data = await response.json();
-      const { token } = data.data;
+      const { token, user } = authData;
       
       // Simpan token
       localStorage.setItem('token', token);
       
-      // Decode token
-      const decoded = jwtDecode<any>(token);
+      // Set user info
       const userInfo: User = {
-        id: decoded.id,
-        email: decoded.email,
-        role: decoded.role,
+        id: user.id,
+        email: user.email,
+        role: user.role,
       };
       
       setUser(userInfo);
@@ -172,6 +163,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Refresh settings
       await refreshSettings();
     } catch (error) {
+      console.error('Register error:', error);
       throw error;
     }
   };
