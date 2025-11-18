@@ -18,7 +18,7 @@ export default function AdminSettingsPage() {
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileSuccess, setProfileSuccess] = useState('');
   const [profileError, setProfileError] = useState('');
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, refreshSettings } = useAuth();
   const { theme } = useTheme();
   const [profileForm] = Form.useForm();
   
@@ -55,6 +55,7 @@ export default function AdminSettingsPage() {
     setSaving(true);
     try {
       await updateSettings(settings); // Memanggil API
+      await refreshSettings(); // Refresh settings di AuthContext
       message.success('Pengaturan berhasil disimpan!');
     } catch (error) {
       message.error('Gagal menyimpan pengaturan!');

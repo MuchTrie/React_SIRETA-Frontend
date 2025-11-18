@@ -8,17 +8,21 @@ import {
   FolderOpenOutlined,
   SwapOutlined,
   ClockCircleOutlined,
+  CloseCircleOutlined,
 } from '@ant-design/icons';
 import { reconciliationAPI } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 const { Title, Text } = Typography;
 
 export default function AdminDashboard() {
+  const { settings, refreshSettings } = useAuth();
   const [resultFolders, setResultFolders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchData();
+    refreshSettings();
   }, []);
 
   const fetchData = async () => {
@@ -177,15 +181,23 @@ export default function AdminDashboard() {
                 <Card 
                   size="small" 
                   style={{ 
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    background: settings?.isProsesReconEnabled 
+                      ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' 
+                      : 'linear-gradient(135deg, #d9d9d9 0%, #8c8c8c 100%)',
                     border: 'none',
                     color: 'white'
                   }}
                 >
                   <div style={{ textAlign: 'center' }}>
-                    <CheckCircleOutlined style={{ fontSize: 32, color: '#fff', marginBottom: 8 }} />
+                    {settings?.isProsesReconEnabled ? (
+                      <CheckCircleOutlined style={{ fontSize: 32, color: '#fff', marginBottom: 8 }} />
+                    ) : (
+                      <CloseCircleOutlined style={{ fontSize: 32, color: '#fff', marginBottom: 8 }} />
+                    )}
                     <div style={{ fontSize: 16, marginBottom: 4, opacity: 0.9 }}>Proses Rekonsiliasi</div>
-                    <div style={{ fontSize: 20, fontWeight: 'bold' }}>Active</div>
+                    <div style={{ fontSize: 20, fontWeight: 'bold' }}>
+                      {settings?.isProsesReconEnabled ? 'Active' : 'Inactive'}
+                    </div>
                   </div>
                 </Card>
               </Col>
@@ -193,15 +205,23 @@ export default function AdminDashboard() {
                 <Card 
                   size="small" 
                   style={{ 
-                    background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                    background: settings?.isConverterEnabled 
+                      ? 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' 
+                      : 'linear-gradient(135deg, #d9d9d9 0%, #8c8c8c 100%)',
                     border: 'none',
                     color: 'white'
                   }}
                 >
                   <div style={{ textAlign: 'center' }}>
-                    <SwapOutlined style={{ fontSize: 32, color: '#fff', marginBottom: 8 }} />
+                    {settings?.isConverterEnabled ? (
+                      <SwapOutlined style={{ fontSize: 32, color: '#fff', marginBottom: 8 }} />
+                    ) : (
+                      <CloseCircleOutlined style={{ fontSize: 32, color: '#fff', marginBottom: 8 }} />
+                    )}
                     <div style={{ fontSize: 16, marginBottom: 4, opacity: 0.9 }}>Settlement Converter</div>
-                    <div style={{ fontSize: 20, fontWeight: 'bold' }}>Active</div>
+                    <div style={{ fontSize: 20, fontWeight: 'bold' }}>
+                      {settings?.isConverterEnabled ? 'Active' : 'Inactive'}
+                    </div>
                   </div>
                 </Card>
               </Col>
@@ -209,15 +229,23 @@ export default function AdminDashboard() {
                 <Card 
                   size="small" 
                   style={{ 
-                    background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                    background: settings?.isHistoryEnabled 
+                      ? 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)' 
+                      : 'linear-gradient(135deg, #d9d9d9 0%, #8c8c8c 100%)',
                     border: 'none',
                     color: 'white'
                   }}
                 >
                   <div style={{ textAlign: 'center' }}>
-                    <FolderOpenOutlined style={{ fontSize: 32, color: '#fff', marginBottom: 8 }} />
+                    {settings?.isHistoryEnabled ? (
+                      <FolderOpenOutlined style={{ fontSize: 32, color: '#fff', marginBottom: 8 }} />
+                    ) : (
+                      <CloseCircleOutlined style={{ fontSize: 32, color: '#fff', marginBottom: 8 }} />
+                    )}
                     <div style={{ fontSize: 16, marginBottom: 4, opacity: 0.9 }}>Riwayat Recon</div>
-                    <div style={{ fontSize: 20, fontWeight: 'bold' }}>Active</div>
+                    <div style={{ fontSize: 20, fontWeight: 'bold' }}>
+                      {settings?.isHistoryEnabled ? 'Active' : 'Inactive'}
+                    </div>
                   </div>
                 </Card>
               </Col>
