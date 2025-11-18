@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Form, Input, Button, Card, Typography, Alert, Spin, Switch } from 'antd';
+import { Form, Input, Button, Card, Typography, Alert, Spin } from 'antd';
 import { UserOutlined, LockOutlined, MoonFilled, SunFilled } from '@ant-design/icons';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -16,7 +16,7 @@ export default function LoginPage() {
 
   // Theme colors
   const bgColor = theme === 'dark' ? '#1c1c27' : '#f0f2f5';
-  const cardBgColor = theme === 'dark' ? '#25254f' : '#ffffff';
+  const cardBgColor = theme === 'dark' ? '#1a1a2e' : '#ffffff';
   const textColor = theme === 'dark' ? 'rgba(255, 255, 255, 0.95)' : 'rgba(0, 0, 0, 0.88)';
 
   const onFinish = async (values: any) => {
@@ -39,12 +39,22 @@ export default function LoginPage() {
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: bgColor }}>
       <Card style={{ width: 400, backgroundColor: cardBgColor }}>
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
-          <Switch 
-            checkedChildren={<MoonFilled />}
-            unCheckedChildren={<SunFilled />}
-            checked={theme === 'dark'}
-            onChange={toggleTheme}
-            size="small"
+          <Button
+            type="text"
+            icon={theme === 'dark' ? 
+              <SunFilled style={{ color: '#fadb14' }} /> : // Kuning untuk matahari
+              <MoonFilled style={{ color: '#1890ff' }} />   // Biru untuk bulan
+            }
+            onClick={toggleTheme}
+            style={{
+              border: 'none',
+              padding: '4px 8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '16px',
+              backgroundColor: 'transparent',
+            }}
           />
         </div>
         <Spin spinning={loading}>

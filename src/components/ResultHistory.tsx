@@ -75,7 +75,7 @@ const ResultHistory: React.FC = () => {
   const getThemeColors = () => {
     if (theme === 'dark') {
       return {
-        filterCardBg: '#25254f', // Dark card background
+        filterCardBg: '#1a1a2e', // Dark card background - konsisten dengan tema
         summaryCardBg: '#2d2d4a', // Summary card background
         successBg: '#162312', // Success background
         warningBg: '#2b2111', // Warning background

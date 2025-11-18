@@ -6,7 +6,8 @@ import {
   DollarOutlined, 
   CheckCircleOutlined,
   CloudUploadOutlined,
-  LoadingOutlined 
+  LoadingOutlined,
+  BarChartOutlined
 } from '@ant-design/icons';
 import type { UploadFile } from 'antd';
 import { useTheme } from '../context/ThemeContext';
@@ -52,7 +53,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUpload, loading, uploadProgre
   const getThemeColors = () => {
     if (theme === 'dark') {
       return {
-        infoBg: '#25254f',
+        infoBg: '#1a1a2e',
         summaryBg: '#2d2d4a',
       };
     } else {
@@ -379,7 +380,12 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUpload, loading, uploadProgre
       {/* Summary Section */}
       {(coreFiles.length > 0 || hasVendorFiles) && (
         <Card 
-          title="📊 Summary Upload"
+          title={
+            <Space>
+              <BarChartOutlined style={{ color: '#722ed1' }} />
+              <Text strong>Summary Upload</Text>
+            </Space>
+          }
           style={{ marginBottom: 16, background: colors.summaryBg }}
           size="small"
         >

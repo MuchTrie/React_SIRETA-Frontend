@@ -14,6 +14,7 @@ import ProsesRekonsiliasiPage from './pages/ProsesRekonsiliasiPage';
 import ResultHistoryPage from './pages/ResultHistoryPage';
 import SettlementConverterPage from './pages/SettlementConverterPage';
 import AdminSettingsPage from './pages/AdminSettingsPage';
+import UserSettingsPage from './pages/UserSettingsPage';
 
 // Komponen Layout & Proteksi
 import MainLayout from './components/MainLayout';
@@ -143,6 +144,7 @@ export default function App() {
           
           {/* Operasional Routes - Operasional only */}
           <Route path="operasional" element={ <ProtectedRoute allowedRoles={['operasional']}><OperationalDashboard /></ProtectedRoute> } />
+          <Route path="operasional/settings" element={ <ProtectedRoute allowedRoles={['operasional']}><UserSettingsPage /></ProtectedRoute> } />
           
           {/* Shared Routes - Admin bisa akses semua, operasional sesuai permission */}
           <Route path="proses-rekonsiliasi" element={ <ProtectedRoute allowedRoles={['admin', 'operasional']}><ProsesRekonsiliasiPage /></ProtectedRoute> } />

@@ -16,8 +16,7 @@ export default function UserSettingsPage() {
   const { theme } = useTheme();
   const [profileForm] = Form.useForm();
   
-  // Theme colors
-  const cardBgColor = theme === 'dark' ? '#25254f' : '#ffffff';
+  // Theme colors - menggunakan ConfigProvider
   const textColor = theme === 'dark' ? 'rgba(255, 255, 255, 0.95)' : 'rgba(0, 0, 0, 0.88)';
 
   // Profile update functions
@@ -95,8 +94,7 @@ export default function UserSettingsPage() {
       {/* Profile Information */}
       <Card 
         title="Informasi Profil" 
-        style={{ marginBottom: '24px', backgroundColor: cardBgColor }}
-        headStyle={{ color: textColor }}
+        style={{ marginBottom: '24px' }}
       >
         <Spin spinning={profileLoading}>
           <Form
@@ -148,9 +146,7 @@ export default function UserSettingsPage() {
 
       {/* Change Password */}
       <Card 
-        title="Ubah Password" 
-        style={{ backgroundColor: cardBgColor }}
-        headStyle={{ color: textColor }}
+        title="Ubah Password"
       >
         <Spin spinning={profileLoading}>
           <Form

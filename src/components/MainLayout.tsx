@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Layout, Menu, Button, Switch, Modal, Typography } from 'antd';
+import { Layout, Menu, Button, Modal, Typography, Avatar, Dropdown, Space } from 'antd';
 import {
   DashboardOutlined,
   FileTextOutlined,
@@ -12,10 +12,14 @@ import {
   SunFilled,
   LockOutlined,
   ExclamationCircleOutlined,
+  UserOutlined,
+  SettingOutlined,
 } from '@ant-design/icons';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext'; 
 import { useTheme } from '../context/ThemeContext';
+// Import logo yang sudah Anda masukkan
+import logoImage from '../assets/images/Logo.png';
 
 const { Header, Content, Footer } = Layout;
 const { Sider } = Layout;
@@ -33,6 +37,7 @@ export default function MainLayout() {
     const path = location.pathname;
     if (path.startsWith('/admin/settings')) return 'admin_settings'; 
     if (path.startsWith('/admin')) return 'admin_dashboard';
+    if (path.startsWith('/operasional/settings')) return 'ops_settings';
     if (path.startsWith('/operasional')) return 'ops_dashboard';
     if (path.startsWith('/proses-rekonsiliasi')) return 'process';
     if (path.startsWith('/riwayat-recon')) return 'history';
@@ -71,6 +76,7 @@ export default function MainLayout() {
       admin_dashboard: '/admin',
       admin_settings: '/admin/settings',
       ops_dashboard: '/operasional',
+      ops_settings: '/operasional/settings',
       process: '/proses-rekonsiliasi',
       converter: '/settlement-converter',
       history: '/riwayat-recon',
@@ -86,40 +92,134 @@ export default function MainLayout() {
     // Biarkan ConfigProvider yang mengaturnya
     <Layout style={{ minHeight: '100vh' }}>
       <Header style={{ 
-        // Hapus 'background: #fff'
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 1000,
         padding: '0 24px', 
         display: 'flex', 
         justifyContent: 'space-between', 
         alignItems: 'center',
         borderBottom: `1px solid ${theme === 'dark' ? '#3d3d5c' : '#d9d9d9'}`,
         color: theme === 'dark' ? 'rgba(255, 255, 255, 0.95)' : 'rgba(0, 0, 0, 0.88)',
+        background: `${theme === 'dark' ? '#001529' : '#ffffff'} !important`,
+        backgroundColor: `${theme === 'dark' ? '#001529' : '#ffffff'} !important`,
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
       }}>
-        <div style={{ 
-          // Hapus 'color: #000'
-          fontSize: '20px', 
-          fontWeight: 'bold',
-          color: 'inherit',
-        }}>
-          🔄 Switching Reconciliation System
+        <div 
+          onClick={() => {
+            const dashboardRoute = user?.role === 'admin' ? '/admin' : '/operasional';
+            navigate(dashboardRoute);
+          }}
+          style={{ 
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            fontSize: '20px', 
+            fontWeight: 'bold',
+            color: 'inherit',
+            cursor: 'pointer',
+            transition: 'color 0.3s ease',
+          }}
+          onMouseEnter={(e) => {
+            const textElement = e.currentTarget.querySelector('.title-text') as HTMLElement;
+            if (textElement) textElement.style.color = '#1890ff';
+          }}
+          onMouseLeave={(e) => {
+            const textElement = e.currentTarget.querySelector('.title-text') as HTMLElement;
+            if (textElement) textElement.style.color = 'inherit';
+          }}
+        >
+          <img 
+            src={logoImage} 
+            alt="Logo" 
+            style={{ 
+              width: '48px', 
+              height: '48px',
+              flexShrink: 0,
+              objectFit: 'contain' // Menjaga aspect ratio logo dengan warna asli
+            }} 
+          />
+          <span className="title-text" style={{ color: 'inherit' }}>
+            Switching Reconciliation System
+          </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          {/* 6. TAMBAHKAN TOMBOL SWITCH TEMA */}
-          <Switch 
-            checkedChildren={<MoonFilled />}
-            unCheckedChildren={<SunFilled />}
-            checked={theme === 'dark'}
-            onChange={toggleTheme}
+          {/* Theme Toggle - Icon Only dengan warna */}
+          <Button
+            type="text"
+            icon={theme === 'dark' ? 
+              <SunFilled style={{ color: '#fadb14' }} /> : // Kuning untuk matahari
+              <MoonFilled style={{ color: '#1890ff' }} />   // Biru untuk bulan
+            }
+            onClick={toggleTheme}
+            style={{
+              border: 'none',
+              padding: '4px 8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '16px',
+              transition: 'all 0.3s ease',
+              backgroundColor: 'transparent',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
           />
-          <span style={{ marginRight: '1rem', color: 'inherit' }}>
-            Halo, {user?.role === 'admin' ? 'Admin' : 'Operasional'}
-          </span>
-          <Button icon={<LogoutOutlined />} onClick={logout}>
-            Logout
-          </Button>
+          
+          {/* Profil User dengan Avatar dan Dropdown */}
+          <Dropdown
+            menu={{
+              items: [
+                {
+                  key: 'settings',
+                  icon: <SettingOutlined />,
+                  label: 'Pengaturan',
+                  onClick: () => {
+                    // Navigate ke halaman settings
+                    const settingsRoute = user?.role === 'admin' ? '/admin/settings' : '/operasional/settings';
+                    navigate(settingsRoute);
+                  }
+                },
+                {
+                  type: 'divider',
+                },
+                {
+                  key: 'logout',
+                  icon: <LogoutOutlined />,
+                  label: 'Logout',
+                  onClick: logout
+                }
+              ]
+            }}
+            placement="bottomRight"
+            trigger={['click']}
+          >
+            <Space style={{ cursor: 'pointer', color: 'inherit' }}>
+              <Avatar 
+                size="default" 
+                icon={<UserOutlined />}
+                style={{ 
+                  backgroundColor: user?.role === 'admin' ? '#1890ff' : '#52c41a',
+                  color: '#fff'
+                }}
+              />
+              <span style={{ color: 'inherit' }}>
+                {user?.role === 'admin' ? 'Admin' : 'Operasional'}
+              </span>
+            </Space>
+          </Dropdown>
         </div>
       </Header>
 
-      <Layout> 
+      <Layout style={{ marginTop: '64px' }}> 
         <Sider
           width={250}
           style={{ 
@@ -142,10 +242,7 @@ export default function MainLayout() {
             {user?.role === 'admin' && (
               <>
                 <Menu.Item key="admin_dashboard" icon={<TeamOutlined />}>
-                  Admin Dashboard
-                </Menu.Item>
-                <Menu.Item key="admin_settings" icon={<ControlOutlined />}>
-                  Settings
+                  Dashboard
                 </Menu.Item>
                 <Menu.Item key="process" icon={<FileTextOutlined />}>
                   Proses Rekonsiliasi
@@ -155,6 +252,9 @@ export default function MainLayout() {
                 </Menu.Item>
                 <Menu.Item key="history" icon={<HistoryOutlined />}>
                   Riwayat Recon
+                </Menu.Item>
+                <Menu.Item key="admin_settings" icon={<ControlOutlined />}>
+                  Pengaturan
                 </Menu.Item>
               </>
             )}
@@ -203,6 +303,11 @@ export default function MainLayout() {
                   }}
                 >
                   Riwayat Rekon {!settings?.isHistoryEnabled && '🔒'}
+                </Menu.Item>
+                
+                {/* Pengaturan - Selalu tersedia untuk operasional */}
+                <Menu.Item key="ops_settings" icon={<ControlOutlined />}>
+                  Pengaturan
                 </Menu.Item>
               </>
             )}
