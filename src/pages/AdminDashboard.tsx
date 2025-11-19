@@ -194,7 +194,7 @@ export default function AdminDashboard() {
       {/* Statistics Cards */}
       <Row gutter={[16, 16]} style={{ marginTop: 24 }}>
         <Col xs={24} sm={12}>
-          <Card>
+          <Card style={{ height: '100%' }}>
             <Statistic
               title="Total Rekonsiliasi"
               value={totalRecons}
@@ -210,7 +210,7 @@ export default function AdminDashboard() {
           </Card>
         </Col>
         <Col xs={24} sm={12}>
-          <Card>
+          <Card style={{ height: '100%' }}>
             <Statistic
               title="List Vendor"
               value={vendors.length}
