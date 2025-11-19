@@ -31,6 +31,25 @@ interface JobFolder {
   files: string[];
 }
 
+interface DashboardStats {
+  totalReconciliations: number;
+  successRate: number;
+  activeUsers: number;
+  avgProcessTime: number;
+  recentActivity: RecentActivityItem[];
+  userBreakdown: {
+    adminCount: number;
+    operationalCount: number;
+  };
+}
+
+interface RecentActivityItem {
+  jobId: string;
+  date: string;
+  status: string;
+  files: number;
+}
+
 export const reconciliationAPI = {
   /**
    * Health check
@@ -174,6 +193,14 @@ export const settlementAPI = {
    */
   previewConverted: async (filename: string): Promise<ConversionResult> => {
     const response = await apiClient.get(`/preview/converted/${filename}`);
+    return response.data;
+  },
+
+  /**
+   * Get dashboard statistics
+   */
+  getDashboardStats: async (): Promise<{ success: boolean; data: DashboardStats }> => {
+    const response = await apiClient.get('/dashboard/stats');
     return response.data;
   },
 };

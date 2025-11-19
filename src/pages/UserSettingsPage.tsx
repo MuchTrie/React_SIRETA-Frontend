@@ -3,7 +3,7 @@ import { Card, Typography, Form, Input, Button, Alert, Spin } from 'antd';
 import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import axios from 'axios';
+import { updateProfile, changePassword } from '../services/profileApi';
 
 const { Title } = Typography;
 
@@ -26,24 +26,30 @@ export default function UserSettingsPage() {
     setProfileSuccess('');
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.put('http://localhost:8080/api/profile', {
+      const response = await updateProfile({
         username: values.username,
         email: values.email
-      }, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
       });
 
-      if (response.data.success) {
-        updateUser({ ...user, username: values.username, email: values.email });
+      if (response.success && response.data) {
+        // Update user in context
+        updateUser({ 
+          ...user, 
+          username: response.data.username, 
+          email: response.data.email 
+        });
+        
+        // If email changed, new token is provided
+        if (response.token) {
+          localStorage.setItem('token', response.token);
+        }
+        
         setProfileSuccess('Profil berhasil diperbarui!');
       }
     } catch (err: any) {
       const errorMsg = err.response?.data?.message || 'Gagal memperbarui profil.';
       setProfileError(errorMsg);
+      console.error('Update profile error:', err);
     } finally {
       setProfileLoading(false);
     }
@@ -55,24 +61,19 @@ export default function UserSettingsPage() {
     setProfileSuccess('');
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.put('http://localhost:8080/api/change-password', {
+      const response = await changePassword({
         currentPassword: values.currentPassword,
         newPassword: values.newPassword
-      }, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
       });
 
-      if (response.data.success) {
+      if (response.success) {
         setProfileSuccess('Password berhasil diubah!');
         profileForm.resetFields(['currentPassword', 'newPassword', 'confirmPassword']);
       }
     } catch (err: any) {
       const errorMsg = err.response?.data?.message || 'Gagal mengubah password.';
       setProfileError(errorMsg);
+      console.error('Change password error:', err);
     } finally {
       setProfileLoading(false);
     }

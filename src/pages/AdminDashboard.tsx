@@ -16,43 +16,114 @@ import { useAuth } from '../context/AuthContext';
 const { Title, Text } = Typography;
 
 export default function AdminDashboard() {
-  const { settings, refreshSettings } = useAuth();
-  const [resultFolders, setResultFolders] = useState<any[]>([]);
+  const { settings, refreshSettings, isLoggedIn, user } = useAuth();
+  const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchData();
-    refreshSettings();
-  }, []);
+    // Only fetch data if user is logged in
+    if (isLoggedIn && user) {
+      console.log('✅ User is logged in, fetching dashboard data...');
+      fetchData();
+      refreshSettings();
+    } else {
+      console.warn('⚠️ User not logged in yet, waiting...');
+    }
+  }, [isLoggedIn, user]);
 
   const fetchData = async () => {
     try {
-      const response = await reconciliationAPI.getResultFolders();
-      if (response.success && response.data) {
-        setResultFolders(response.data);
+      console.log('🚀 Starting dashboard data fetch...');
+      
+      // Fetch folders for recent activity (works reliably)
+      const foldersResponse = await reconciliationAPI.getResultFolders();
+      console.log('📁 Folders Response:', foldersResponse);
+      
+      // Extract unique vendors from all folders
+      let vendorSet = new Set<string>();
+      
+      if (foldersResponse.success && foldersResponse.data) {
+        const folders = foldersResponse.data;
+        console.log('✅ Got folders:', folders);
+        
+        // Parse folder data to create recent activity (EXACTLY like ResultHistory)
+        const recentActivity = folders
+          .filter((folder: any) => folder.name !== 'converted') // Exclude converted folder
+          .slice(-5) // Get last 5 folders (most recent)
+          .reverse() // Newest first
+          .map((folder: any) => {
+            const jobId = folder.name.split('-')[0]; // Extract "0001" from "0001-18-11-2025"
+            const parts = folder.name.split('-');
+            const date = parts.length === 4 ? `${parts[1]}/${parts[2]}/${parts[3]}` : folder.name;
+            const fileCount = folder.files?.length || 0;
+            
+            // Extract vendors from result files
+            const vendors = new Set<string>();
+            folder.files?.forEach((filename: string) => {
+              if (filename.includes('_result.csv')) {
+                const vendor = filename.split('_')[0].toUpperCase();
+                vendors.add(vendor);
+                vendorSet.add(vendor); // Add to global vendor set
+              }
+            });
+            
+            return {
+              jobId: `#${jobId}`,
+              date: date,
+              files: fileCount,
+              vendors: Array.from(vendors)
+            };
+          });
+        
+        console.log('📊 Recent Activity:', recentActivity);
+        
+        // Use folder count for total reconciliations
+        const totalRecons = folders.filter((f: any) => f.name !== 'converted').length;
+        const vendors = Array.from(vendorSet).sort();
+        
+        console.log('📊 Vendors found:', vendors);
+        
+        setStats({
+          totalReconciliations: totalRecons,
+          vendors: vendors,
+          recentActivity: recentActivity
+        });
+        
+        console.log('✅ Stats set successfully with vendors:', vendors);
+      } else {
+        console.warn('⚠️ API response not success or no data');
+        setStats({
+          totalReconciliations: 0,
+          vendors: [],
+          recentActivity: []
+        });
       }
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('❌ Error fetching dashboard data:', error);
+      setStats({
+        totalReconciliations: 0,
+        vendors: [],
+        recentActivity: []
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  // Calculate statistics from real data
-  const totalRecons = resultFolders.length || 3; // Fallback jika kosong
+  // Calculate statistics from real data with proper fallbacks
+  const totalRecons = stats?.totalReconciliations ?? 0;
+  const vendors = stats?.vendors ?? [];
   
-  // Parse folder names to extract jobId and date
-  const parsedFolders = resultFolders.map(folder => {
-    // folder.name format: "0009-11-11-2025" (jobId-date)
-    const parts = folder.name.split('-');
-    const jobId = parts[0]; // "0009"
-    const date = `${parts[3]}-${parts[2]}-${parts[1]}`; // "2025-11-11"
-    return { jobId: folder.name, date };
+  // Recent activity data from backend
+  const recentActivity = stats?.recentActivity || [];
+
+  console.log('📊 Dashboard Render Stats:', {
+    stats,
+    totalRecons,
+    vendors,
+    recentActivityCount: recentActivity.length,
+    recentActivity: recentActivity
   });
-  
-  const recentRecons = parsedFolders.length > 0 ? parsedFolders.slice(0, 5) : [
-    { jobId: '-', date: '-' }
-  ];
 
   const recentActivityColumns = [
     {
@@ -68,6 +139,24 @@ export default function AdminDashboard() {
       render: (text: string) => <Text type="secondary">{text}</Text>,
     },
     {
+      title: 'Vendor',
+      dataIndex: 'vendors',
+      key: 'vendors',
+      render: (vendors: string[]) => (
+        <Space size={4}>
+          {vendors?.map((vendor: string) => (
+            <Tag key={vendor} color="blue">{vendor}</Tag>
+          ))}
+        </Space>
+      ),
+    },
+    {
+      title: 'Files',
+      dataIndex: 'files',
+      key: 'files',
+      render: (count: number) => <Badge count={count} showZero color="#1890ff" />,
+    },
+    {
       title: 'Status',
       key: 'status',
       render: () => (
@@ -78,11 +167,20 @@ export default function AdminDashboard() {
     },
   ];
 
-  const recentActivityData = recentRecons.map(folder => ({
-    key: folder.jobId,
-    jobId: folder.jobId,
-    date: folder.date,
+  const recentActivityData = recentActivity.map((item: any) => ({
+    key: item.jobId,
+    jobId: item.jobId,
+    date: item.date,
+    vendors: item.vendors || [],
+    files: item.files,
   }));
+
+  console.log('📋 Recent Activity Data for Table:', recentActivityData);
+
+  // Empty state message
+  const emptyText = recentActivity.length === 0 
+    ? 'Belum ada aktivitas rekonsiliasi. Mulai proses rekonsiliasi untuk melihat data di sini.' 
+    : undefined;
 
   return (
     <div>
@@ -95,7 +193,7 @@ export default function AdminDashboard() {
 
       {/* Statistics Cards */}
       <Row gutter={[16, 16]} style={{ marginTop: 24 }}>
-        <Col xs={24} sm={12} lg={6}>
+        <Col xs={24} sm={12}>
           <Card>
             <Statistic
               title="Total Rekonsiliasi"
@@ -111,44 +209,20 @@ export default function AdminDashboard() {
             <Text type="secondary" style={{ fontSize: 12 }}>vs bulan lalu</Text>
           </Card>
         </Col>
-        <Col xs={24} sm={12} lg={6}>
+        <Col xs={24} sm={12}>
           <Card>
             <Statistic
-              title="Success Rate"
-              value={93.5}
-              precision={1}
-              prefix={<CheckCircleOutlined />}
-              suffix="%"
-              valueStyle={{ color: '#52c41a' }}
-            />
-            <Progress percent={93.5} showInfo={false} strokeColor="#52c41a" />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic
-              title="Active Users"
-              value={2}
-              prefix={<TeamOutlined />}
+              title="List Vendor"
+              value={vendors.length}
+              prefix={<SwapOutlined />}
               valueStyle={{ color: '#722ed1' }}
             />
-            <Space style={{ marginTop: 8 }}>
-              <Badge color="#1890ff" text="1 Admin" />
-              <Badge color="#52c41a" text="1 Ops" />
+            <Space style={{ marginTop: 8 }} wrap>
+              {vendors.map((vendor: string) => (
+                <Tag key={vendor} color="blue">{vendor}</Tag>
+              ))}
+              {vendors.length === 0 && <Text type="secondary">Belum ada vendor</Text>}
             </Space>
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic
-              title="Avg. Process Time"
-              value={2.3}
-              precision={1}
-              prefix={<ClockCircleOutlined />}
-              suffix="min"
-              valueStyle={{ color: '#fa8c16' }}
-            />
-            <Text type="secondary" style={{ fontSize: 12 }}>per file batch</Text>
           </Card>
         </Col>
       </Row>
@@ -166,6 +240,7 @@ export default function AdminDashboard() {
               pagination={false}
               size="middle"
               loading={loading}
+              locale={{ emptyText }}
             />
           </Card>
         </Col>
