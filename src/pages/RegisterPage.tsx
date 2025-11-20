@@ -4,6 +4,8 @@ import { UserOutlined, LockOutlined, MailOutlined, MoonFilled, SunFilled } from 
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+// Background image (place `admin-ajax.png` in `src/assets/images/`)
+import bgImage from '../assets/images/admin-ajax.png';
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -19,7 +21,7 @@ export default function RegisterPage() {
 
   // Theme colors
   const bgColor = theme === 'dark' ? '#1c1c27' : '#f0f2f5';
-  const cardBgColor = theme === 'dark' ? '#1a1a2e' : '#ffffff';
+  // cardBgColor removed (we apply transparency directly to Card style)
   const textColor = theme === 'dark' ? 'rgba(255, 255, 255, 0.95)' : 'rgba(0, 0, 0, 0.88)';
 
   const onFinish = async (values: any) => {
@@ -45,8 +47,23 @@ export default function RegisterPage() {
   };
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: bgColor }}>
-      <Card style={{ width: 450, backgroundColor: cardBgColor }}>
+    <div style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: '100vh',
+      background: `${bgColor} url(${bgImage}) center center / 40% no-repeat`
+    }}>
+      <Card
+        style={{
+          width: 450,
+          backgroundColor: theme === 'dark' ? 'rgba(0,0,0,0.48)' : 'rgba(255,255,255,0.72)',
+          backdropFilter: 'blur(6px)',
+          WebkitBackdropFilter: 'blur(6px)',
+          borderRadius: 8,
+          boxShadow: '0 8px 24px rgba(0,0,0,0.12)'
+        }}
+      >
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
           <Button
             type="text"
@@ -67,8 +84,15 @@ export default function RegisterPage() {
           />
         </div>
         <Spin spinning={loading}>
-          <Title level={2} style={{ textAlign: 'center', color: textColor }}>
-           Daftar Akun Baru
+          <Title level={2} style={{ 
+            textAlign: 'center', 
+            color: theme === 'dark' ? '#ffffff' : '#2E9FD9',
+            fontWeight: '700',
+            letterSpacing: '0.5px',
+            textTransform: 'uppercase',
+            marginBottom: '24px'
+          }}>
+           Registrasi Akun
           </Title>
           
           {error && <Alert message={error} type="error" showIcon style={{ marginBottom: 24 }} />}
@@ -136,8 +160,26 @@ export default function RegisterPage() {
               </Button>
             </Form.Item>
 
-            <div style={{ textAlign: 'center', color: textColor }}>
-              Sudah punya akun? <a href="/login" style={{ color: '#1890ff' }}>Login di sini</a>
+            <div style={{ textAlign: 'center', marginTop: '16px' }}>
+              <span style={{ color: textColor }}>Sudah punya akun? </span>
+              <a href="/login" style={{ 
+                color: '#1890ff',
+                padding: '4px 12px',
+                borderRadius: '4px',
+                border: '1px solid #1890ff',
+                textDecoration: 'none',
+                display: 'inline-block',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#1890ff';
+                e.currentTarget.style.color = '#fff';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = '#1890ff';
+              }}
+              >Login disini</a>
             </div>
           </Form>
         </Spin>

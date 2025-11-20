@@ -19,7 +19,8 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext'; 
 import { useTheme } from '../context/ThemeContext';
 // Import logo yang sudah Anda masukkan
-import logoImage from '../assets/images/Logo.png';
+import logoLight from '../assets/images/SIRETALIGHT.png';
+import logoDark from '../assets/images/SIRETADARK.png';
 
 const { Header, Content, Footer } = Layout;
 const { Sider } = Layout;
@@ -130,11 +131,11 @@ export default function MainLayout() {
           }}
           onMouseLeave={(e) => {
             const textElement = e.currentTarget.querySelector('.title-text') as HTMLElement;
-            if (textElement) textElement.style.color = 'inherit';
+            if (textElement) textElement.style.color = '#2E9FD9';
           }}
         >
           <img 
-            src={logoImage} 
+            src={theme === 'dark' ? logoDark : logoLight} 
             alt="Logo" 
             style={{ 
               width: '48px', 
@@ -143,8 +144,13 @@ export default function MainLayout() {
               objectFit: 'contain' // Menjaga aspect ratio logo dengan warna asli
             }} 
           />
-          <span className="title-text" style={{ color: 'inherit' }}>
-            Switching Reconciliation System
+          <span className="title-text" style={{ 
+            color: '#2E9FD9',
+            fontWeight: '700',
+            letterSpacing: '0.5px',
+            textTransform: 'uppercase'
+          }}>
+            Sistem Rekonsiliasi Data
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -207,7 +213,7 @@ export default function MainLayout() {
                 size="default" 
                 icon={<UserOutlined />}
                 style={{ 
-                  backgroundColor: user?.role === 'admin' ? '#1890ff' : '#52c41a',
+                  backgroundColor: '#2E9FD9',
                   color: '#fff'
                 }}
               />
@@ -333,7 +339,7 @@ export default function MainLayout() {
             paddingTop: 24, 
             paddingBottom: 0 
           }}>
-            Switching Reconciliation System ©{new Date().getFullYear()} - Built with React & Go
+            Sistem Rekonsiliasi Data ©{new Date().getFullYear()} - Built with React & Go
           </Footer>
         </Layout>
       </Layout>
