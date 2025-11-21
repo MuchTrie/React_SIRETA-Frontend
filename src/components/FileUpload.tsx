@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Upload, Button, Card, Row, Col, Typography, Divider, Alert, Tag, Space, Progress, Modal } from 'antd';
+import { Upload, Button, Card, Row, Col, Typography, Divider, Alert, Tag, Space, Progress, Modal, message } from 'antd';
 import { 
   InboxOutlined, 
   FileTextOutlined, 
@@ -7,9 +7,12 @@ import {
   CheckCircleOutlined,
   CloudUploadOutlined,
   LoadingOutlined,
-  BarChartOutlined
+  BarChartOutlined,
+  DeleteOutlined,
+  FileAddOutlined
 } from '@ant-design/icons';
-import type { UploadFile } from 'antd';
+import type { UploadFile, UploadProps } from 'antd';
+import type { RcFile } from 'antd/es/upload';
 import { useTheme } from '../context/ThemeContext';
 
 const { Title, Text, Paragraph } = Typography;
@@ -48,6 +51,9 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUpload, loading, uploadProgre
   const [coreFiles, setCoreFiles] = useState<UploadFile[]>([]);
   const [reconFiles, setReconFiles] = useState<UploadFile[]>([]);
   const [settlementFiles, setSettlementFiles] = useState<UploadFile[]>([]);
+  const [isDraggingCore, setIsDraggingCore] = useState(false);
+  const [isDraggingRecon, setIsDraggingRecon] = useState(false);
+  const [isDraggingSettlement, setIsDraggingSettlement] = useState(false);
 
   // Helper function untuk mendapatkan warna berdasarkan tema
   const getThemeColors = () => {
@@ -158,6 +164,91 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUpload, loading, uploadProgre
     });
   };
 
+  // Clear all files
+  const clearAllFiles = () => {
+    Modal.confirm({
+      title: 'Hapus Semua File?',
+      content: 'Apakah Anda yakin ingin menghapus semua file yang sudah diupload?',
+      okText: 'Ya, Hapus',
+      cancelText: 'Batal',
+      okButtonProps: { danger: true },
+      onOk: () => {
+        setCoreFiles([]);
+        setReconFiles([]);
+        setSettlementFiles([]);
+        message.success('Semua file berhasil dihapus');
+      },
+    });
+  };
+
+  // Enhanced upload props untuk better drag & drop experience
+  const getUploadProps = (
+    fileList: UploadFile[],
+    setFileList: React.Dispatch<React.SetStateAction<UploadFile[]>>,
+    isDragging: boolean,
+    setIsDragging: React.Dispatch<React.SetStateAction<boolean>>,
+    acceptTypes?: string
+  ): UploadProps => {
+    // Track processed files untuk avoid duplicate
+    const processedBatch = React.useRef<Set<string>>(new Set());
+
+    return {
+      multiple: true,
+      accept: acceptTypes,
+      fileList,
+      beforeUpload: (file: RcFile, files: RcFile[]) => {
+        // Generate batch ID untuk track
+        const batchId = files.map(f => f.name).sort().join('|');
+        
+        // Jika batch ini sudah diproses, skip
+        if (processedBatch.current.has(batchId)) {
+          return false;
+        }
+        
+        // Mark batch sebagai processed
+        processedBatch.current.add(batchId);
+        
+        // Add semua files dari batch
+        const newFiles: UploadFile[] = files.map((f) => ({
+          uid: f.name + Date.now() + Math.random(),
+          name: f.name,
+          size: f.size,
+          type: f.type,
+          originFileObj: f,
+        }));
+        
+        setFileList((prev) => [...prev, ...newFiles]);
+        message.success(`${files.length} file berhasil ditambahkan`);
+        
+        // Clear processed batch setelah delay
+        setTimeout(() => {
+          processedBatch.current.clear();
+        }, 1000);
+        
+        return false;
+      },
+      onRemove: (file) => {
+        setFileList((prev) => prev.filter((f) => f.uid !== file.uid));
+        message.info('File dihapus');
+      },
+      onDrop: (e) => {
+        console.log('Dropped files', e.dataTransfer.files);
+        setIsDragging(false);
+      },
+      onDragEnter: () => {
+        setIsDragging(true);
+      },
+      onDragLeave: () => {
+        setIsDragging(false);
+      },
+      showUploadList: {
+        showRemoveIcon: true,
+        removeIcon: <DeleteOutlined style={{ color: 'red' }} />,
+      },
+      listType: 'text',
+    };
+  };
+
   return (
     <div>
       <Title level={2}>
@@ -165,22 +256,39 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUpload, loading, uploadProgre
       </Title>
       
       <Alert
-        message="Cara Penggunaan"
+        message="🎯 Cara Penggunaan - Drag & Drop Multiple Files"
         description={
           <div>
             <Paragraph style={{ marginBottom: 8 }}>
-              1. Upload <strong>CORE file(s)</strong> (wajib)<br />
-              2. Upload <strong>Reconciliation files</strong> - nama file harus mengandung vendor (ALTO/JALIN/AJ/RINTI)<br />
-              3. Upload <strong>Settlement files</strong> - nama file harus mengandung vendor (ALTO/JALIN/AJ/RINTI)<br />
+              1. <strong>Drag & drop</strong> atau klik untuk upload <strong>CORE file(s)</strong> (wajib) - bisa sekaligus banyak file<br />
+              2. <strong>Drag & drop</strong> file <strong>Reconciliation</strong> - nama file harus mengandung vendor (ALTO/JALIN/AJ/RINTI)<br />
+              3. <strong>Drag & drop</strong> file <strong>Settlement</strong> - nama file harus mengandung vendor (ALTO/JALIN/AJ/RINTI)<br />
               4. Klik <strong>Proses Rekonsiliasi</strong>
             </Paragraph>
-            <Text type="warning">💡 Tip: Pastikan nama file mengandung keyword vendor untuk auto-detect</Text>
+            <div>
+              <Tag color="blue" icon={<FileAddOutlined />}>Multiple files sekaligus</Tag>
+              <Tag color="green">Auto-detect vendor dari nama file</Tag>
+              <Tag color="orange">CSV/TXT/BIN semua support</Tag>
+            </div>
           </div>
         }
         type="info"
         showIcon
         style={{ marginBottom: 24 }}
       />
+
+      {(coreFiles.length > 0 || reconFiles.length > 0 || settlementFiles.length > 0) && (
+        <div style={{ marginBottom: 16, textAlign: 'right' }}>
+          <Button 
+            danger 
+            icon={<DeleteOutlined />}
+            onClick={clearAllFiles}
+            size="small"
+          >
+            Hapus Semua File
+          </Button>
+        </div>
+      )}
 
       {/* CORE FILES */}
       <Card 
@@ -195,40 +303,26 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUpload, loading, uploadProgre
             )}
           </Space>
         }
-        style={{ marginBottom: 16 }}
+        style={{ 
+          marginBottom: 16,
+          border: isDraggingCore ? '2px dashed #1890ff' : undefined,
+          boxShadow: isDraggingCore ? '0 0 10px rgba(24, 144, 255, 0.3)' : undefined,
+        }}
       >
         <Dragger
-          multiple
-          accept=".csv"
-          beforeUpload={(file) => {
-            const uploadFile: UploadFile = {
-              uid: file.name + Date.now(),
-              name: file.name,
-              size: file.size,
-              type: file.type,
-              originFileObj: file as any,
-            };
-            setCoreFiles([...coreFiles, uploadFile]);
-            return false;
-          }}
-          onRemove={(file) => {
-            setCoreFiles(coreFiles.filter(f => f.uid !== file.uid));
-          }}
-          fileList={coreFiles}
-          showUploadList={true}
-          listType="text"
-          customRequest={({ onSuccess }) => {
-            setTimeout(() => {
-              onSuccess && onSuccess("ok");
-            }, 0);
+          {...getUploadProps(coreFiles, setCoreFiles, isDraggingCore, setIsDraggingCore, '.csv')}
+          style={{
+            background: isDraggingCore ? 'rgba(24, 144, 255, 0.05)' : undefined,
           }}
         >
           <p className="ant-upload-drag-icon">
-            <InboxOutlined style={{ color: '#1890ff' }} />
+            <InboxOutlined style={{ color: '#1890ff', fontSize: isDraggingCore ? 60 : 48 }} />
           </p>
-          <p className="ant-upload-text">Drag & Drop CORE files di sini atau klik untuk upload</p>
+          <p className="ant-upload-text" style={{ fontWeight: isDraggingCore ? 'bold' : 'normal' }}>
+            {isDraggingCore ? '📥 Drop files di sini!' : 'Drag & Drop CORE files (bisa multiple sekaligus)'}
+          </p>
           <p className="ant-upload-hint">
-            Support: CSV files | Multiple files OK
+            Support: CSV files | Bisa drop banyak file sekaligus | Klik untuk browse
           </p>
         </Dragger>
       </Card>
@@ -248,40 +342,28 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUpload, loading, uploadProgre
                 )}
               </Space>
             }
-            style={{ marginBottom: 16, height: '100%' }}
+            style={{ 
+              marginBottom: 16, 
+              height: '100%',
+              border: isDraggingRecon ? '2px dashed #52c41a' : undefined,
+              boxShadow: isDraggingRecon ? '0 0 10px rgba(82, 196, 26, 0.3)' : undefined,
+            }}
           >
             <Dragger
-              multiple
-              beforeUpload={(file) => {
-                const uploadFile: UploadFile = {
-                  uid: file.name + Date.now(),
-                  name: file.name,
-                  size: file.size,
-                  type: file.type,
-                  originFileObj: file as any,
-                };
-                setReconFiles([...reconFiles, uploadFile]);
-                return false;
-              }}
-              onRemove={(file) => {
-                setReconFiles(reconFiles.filter(f => f.uid !== file.uid));
-              }}
-              fileList={reconFiles}
-              style={{ minHeight: 220 }}
-              showUploadList={true}
-              listType="text"
-              customRequest={({ onSuccess }) => {
-                setTimeout(() => {
-                  onSuccess && onSuccess("ok");
-                }, 0);
+              {...getUploadProps(reconFiles, setReconFiles, isDraggingRecon, setIsDraggingRecon)}
+              style={{ 
+                minHeight: 220,
+                background: isDraggingRecon ? 'rgba(82, 196, 26, 0.05)' : undefined,
               }}
             >
               <p className="ant-upload-drag-icon">
-                <InboxOutlined style={{ color: '#52c41a' }} />
+                <InboxOutlined style={{ color: '#52c41a', fontSize: isDraggingRecon ? 60 : 48 }} />
               </p>
-              <p className="ant-upload-text">Drag & Drop Reconciliation files</p>
+              <p className="ant-upload-text" style={{ fontWeight: isDraggingRecon ? 'bold' : 'normal' }}>
+                {isDraggingRecon ? '📥 Drop files di sini!' : 'Drag & Drop Reconciliation files'}
+              </p>
               <p className="ant-upload-hint">
-                CSV/TXT/File tanpa ekstensi | Auto-detect vendor dari nama file
+                CSV/TXT/File tanpa ekstensi | Multiple files OK | Auto-detect vendor
               </p>
             </Dragger>
 
@@ -318,40 +400,28 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUpload, loading, uploadProgre
                 )}
               </Space>
             }
-            style={{ marginBottom: 16, height: '100%' }}
+            style={{ 
+              marginBottom: 16, 
+              height: '100%',
+              border: isDraggingSettlement ? '2px dashed #fa8c16' : undefined,
+              boxShadow: isDraggingSettlement ? '0 0 10px rgba(250, 140, 22, 0.3)' : undefined,
+            }}
           >
             <Dragger
-              multiple
-              beforeUpload={(file) => {
-                const uploadFile: UploadFile = {
-                  uid: file.name + Date.now(),
-                  name: file.name,
-                  size: file.size,
-                  type: file.type,
-                  originFileObj: file as any,
-                };
-                setSettlementFiles([...settlementFiles, uploadFile]);
-                return false;
-              }}
-              onRemove={(file) => {
-                setSettlementFiles(settlementFiles.filter(f => f.uid !== file.uid));
-              }}
-              fileList={settlementFiles}
-              style={{ minHeight: 220 }}
-              showUploadList={true}
-              listType="text"
-              customRequest={({ onSuccess }) => {
-                setTimeout(() => {
-                  onSuccess && onSuccess("ok");
-                }, 0);
+              {...getUploadProps(settlementFiles, setSettlementFiles, isDraggingSettlement, setIsDraggingSettlement)}
+              style={{ 
+                minHeight: 220,
+                background: isDraggingSettlement ? 'rgba(250, 140, 22, 0.05)' : undefined,
               }}
             >
               <p className="ant-upload-drag-icon">
-                <InboxOutlined style={{ color: '#fa8c16' }} />
+                <InboxOutlined style={{ color: '#fa8c16', fontSize: isDraggingSettlement ? 60 : 48 }} />
               </p>
-              <p className="ant-upload-text">Drag & Drop Settlement files</p>
+              <p className="ant-upload-text" style={{ fontWeight: isDraggingSettlement ? 'bold' : 'normal' }}>
+                {isDraggingSettlement ? '📥 Drop files di sini!' : 'Drag & Drop Settlement files'}
+              </p>
               <p className="ant-upload-hint">
-                CSV/TXT/BIN/File tanpa ekstensi | Auto-detect vendor dari nama file
+                CSV/TXT/BIN/File tanpa ekstensi | Multiple files | Auto-detect vendor
               </p>
             </Dragger>
 
