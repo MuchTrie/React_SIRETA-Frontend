@@ -11,6 +11,12 @@ export default function ProsesRekonsiliasiPage() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [processingStage, setProcessingStage] = useState('');
 
+  // Helper function untuk memastikan progress selalu integer 0-100
+  const updateProgress = (value: number) => {
+    const clampedValue = Math.max(0, Math.min(100, Math.floor(value)));
+    setUploadProgress(clampedValue);
+  };
+
   const handleUpload = async (files: Record<string, File | File[]>) => {
     if (!files.coreFiles || (Array.isArray(files.coreFiles) && files.coreFiles.length === 0)) {
       message.error('File Core wajib diupload!');
@@ -18,20 +24,45 @@ export default function ProsesRekonsiliasiPage() {
     }
 
     setLoading(true);
-    setUploadProgress(0);
+    updateProgress(0);
     setProcessingStage('Mengunggah file...');
     
     try {
-      setUploadProgress(30);
+      // Simulasi progress upload
+      updateProgress(10);
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      updateProgress(20);
+      setProcessingStage('Memvalidasi file...');
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      updateProgress(35);
       setProcessingStage('Memproses rekonsiliasi...');
+      
+      // Simulasi progress selama API call
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev < 70) {
+            const increment = Math.floor(Math.random() * 3) + 1; // 1-3 integer
+            const newProgress = Math.min(prev + increment, 70); // Maksimal 70
+            return newProgress;
+          }
+          return prev;
+        });
+      }, 800);
       
       const response = await reconciliationAPI.processReconciliation(files as any);
       
-      setUploadProgress(80);
+      // Clear interval dan set progress ke tahap akhir
+      clearInterval(progressInterval);
+      updateProgress(85);
       setProcessingStage('Finalisasi hasil...');
+      await new Promise(resolve => setTimeout(resolve, 300));
       
       if (response.success) {
-        setUploadProgress(100);
+        updateProgress(100);
+        setProcessingStage('Selesai!');
+        await new Promise(resolve => setTimeout(resolve, 500));
         message.success('Rekonsiliasi berhasil diproses!');
         setResult(response.data as ReconciliationResult);
       } else {
@@ -41,7 +72,7 @@ export default function ProsesRekonsiliasiPage() {
       message.error(error.response?.data?.message || 'Terjadi kesalahan saat memproses rekonsiliasi');
     } finally {
       setLoading(false);
-      setUploadProgress(0);
+      updateProgress(0);
       setProcessingStage('');
     }
   };

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, Statistic, Row, Col, Typography, Button, Space } from 'antd';
-import { DownloadOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
+import { DownloadOutlined, CheckCircleOutlined, CloseCircleOutlined, BarChartOutlined } from '@ant-design/icons';
 import type { ReconciliationResult } from '../types';
 import { useTheme } from '../context/ThemeContext';
 
@@ -212,7 +212,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onDownload, onR
           <Card size="small" style={{ backgroundColor: colors.infoBg, borderColor: '#91d5ff', marginTop: 16 }}>
             <Text strong style={{ color: '#1890ff' }}>
               ℹ️ Rekonsiliasi selesai! File hasil telah disimpan. 
-              Untuk melihat detail data, silakan buka menu "📊 Riwayat Hasil Rekonsiliasi"
+              Untuk melihat detail data, silakan buka menu "<BarChartOutlined /> Riwayat Hasil Rekonsiliasi"
             </Text>
           </Card>
         </Card>

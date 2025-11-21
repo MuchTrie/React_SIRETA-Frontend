@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, Typography, Form, Input, Button, Alert, Spin } from 'antd';
 import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
 import { useAuth } from '../context/AuthContext';
@@ -12,12 +12,37 @@ export default function UserSettingsPage() {
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileSuccess, setProfileSuccess] = useState('');
   const [profileError, setProfileError] = useState('');
+  
+  // Password settings state (separate from profile)
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordSuccess, setPasswordSuccess] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  
   const { user, updateUser } = useAuth();
   const { theme } = useTheme();
   const [profileForm] = Form.useForm();
   
   // Theme colors - menggunakan ConfigProvider
   const textColor = theme === 'dark' ? 'rgba(255, 255, 255, 0.95)' : 'rgba(0, 0, 0, 0.88)';
+
+  // Auto-dismiss success messages after 5 seconds
+  useEffect(() => {
+    if (profileSuccess) {
+      const timer = setTimeout(() => {
+        setProfileSuccess('');
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [profileSuccess]);
+
+  useEffect(() => {
+    if (passwordSuccess) {
+      const timer = setTimeout(() => {
+        setPasswordSuccess('');
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [passwordSuccess]);
 
   // Profile update functions
   const onFinishProfile = async (values: any) => {
@@ -56,9 +81,9 @@ export default function UserSettingsPage() {
   };
 
   const onFinishPassword = async (values: any) => {
-    setProfileLoading(true);
-    setProfileError('');
-    setProfileSuccess('');
+    setPasswordLoading(true);
+    setPasswordError('');
+    setPasswordSuccess('');
 
     try {
       const response = await changePassword({
@@ -67,15 +92,15 @@ export default function UserSettingsPage() {
       });
 
       if (response.success) {
-        setProfileSuccess('Password berhasil diubah!');
+        setPasswordSuccess('Password berhasil diubah!');
         profileForm.resetFields(['currentPassword', 'newPassword', 'confirmPassword']);
       }
     } catch (err: any) {
       const errorMsg = err.response?.data?.message || 'Gagal mengubah password.';
-      setProfileError(errorMsg);
+      setPasswordError(errorMsg);
       console.error('Change password error:', err);
     } finally {
-      setProfileLoading(false);
+      setPasswordLoading(false);
     }
   };
 
@@ -89,14 +114,13 @@ export default function UserSettingsPage() {
         Pengaturan Profil
       </Title>
 
-      {profileSuccess && <Alert message={profileSuccess} type="success" showIcon style={{ marginBottom: 24 }} />}
-      {profileError && <Alert message={profileError} type="error" showIcon style={{ marginBottom: 24 }} />}
-
       {/* Profile Information */}
       <Card 
         title="Informasi Profil" 
         style={{ marginBottom: '24px' }}
       >
+        {profileSuccess && <Alert message={profileSuccess} type="success" showIcon style={{ marginBottom: 16 }} />}
+        {profileError && <Alert message={profileError} type="error" showIcon style={{ marginBottom: 16 }} />}
         <Spin spinning={profileLoading}>
           <Form
             layout="vertical"
@@ -149,7 +173,10 @@ export default function UserSettingsPage() {
       <Card 
         title="Ubah Password"
       >
-        <Spin spinning={profileLoading}>
+        {passwordSuccess && <Alert message={passwordSuccess} type="success" showIcon style={{ marginBottom: 16 }} />}
+        {passwordError && <Alert message={passwordError} type="error" showIcon style={{ marginBottom: 16 }} />}
+        
+        <Spin spinning={passwordLoading}>
           <Form
             form={profileForm}
             layout="vertical"
@@ -203,7 +230,7 @@ export default function UserSettingsPage() {
             </Form.Item>
 
             <Form.Item>
-              <Button type="primary" htmlType="submit" loading={profileLoading}>
+              <Button type="primary" htmlType="submit" loading={passwordLoading}>
                 Ubah Password
               </Button>
             </Form.Item>
