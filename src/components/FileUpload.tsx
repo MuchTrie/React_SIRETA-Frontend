@@ -185,7 +185,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUpload, loading, uploadProgre
   const getUploadProps = (
     fileList: UploadFile[],
     setFileList: React.Dispatch<React.SetStateAction<UploadFile[]>>,
-    isDragging: boolean,
+    _isDragging: boolean,
     setIsDragging: React.Dispatch<React.SetStateAction<boolean>>,
     acceptTypes?: string
   ): UploadProps => {
@@ -196,7 +196,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUpload, loading, uploadProgre
       multiple: true,
       accept: acceptTypes,
       fileList,
-      beforeUpload: (file: RcFile, files: RcFile[]) => {
+      beforeUpload: (_file: RcFile, files: RcFile[]) => {
         // Generate batch ID untuk track
         const batchId = files.map(f => f.name).sort().join('|');
         
@@ -233,12 +233,6 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUpload, loading, uploadProgre
       },
       onDrop: (e) => {
         console.log('Dropped files', e.dataTransfer.files);
-        setIsDragging(false);
-      },
-      onDragEnter: () => {
-        setIsDragging(true);
-      },
-      onDragLeave: () => {
         setIsDragging(false);
       },
       showUploadList: {

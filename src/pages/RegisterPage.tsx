@@ -164,19 +164,13 @@ export default function RegisterPage() {
               <span style={{ color: textColor }}>Sudah punya akun? </span>
               <a href="/login" style={{ 
                 color: '#1890ff',
-                padding: '4px 12px',
-                borderRadius: '4px',
-                border: '1px solid #1890ff',
-                textDecoration: 'none',
-                display: 'inline-block',
-                transition: 'all 0.3s ease'
+                textDecoration: 'underline',
+                transition: 'color 0.3s ease'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#1890ff';
-                e.currentTarget.style.color = '#fff';
+                e.currentTarget.style.color = '#40a9ff';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
                 e.currentTarget.style.color = '#1890ff';
               }}
               >Login disini</a>
