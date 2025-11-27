@@ -52,6 +52,12 @@ interface VendorData {
   vendor: string;
   reconData: ReconciliationData[];
   settlementData: SettlementData[];
+  settlementMetadata?: {
+    match_count: number;
+    mismatch_count: number;
+    only_in_core: number;
+    only_in_switching: number;
+  };
 }
 
 const ResultHistory: React.FC = () => {
@@ -269,7 +275,13 @@ const ResultHistory: React.FC = () => {
         try {
           const response = await reconciliationAPI.getResultData(folderName, vendor.toLowerCase(), 'settlement');
           if (response.success) {
-            data.settlementData = response.data || [];
+            // Handling response yang bisa berupa array langsung atau object dengan data + metadata
+            if (response.data && typeof response.data === 'object' && 'data' in response.data) {
+              data.settlementData = response.data.data || [];
+              data.settlementMetadata = response.data.metadata;
+            } else {
+              data.settlementData = response.data || [];
+            }
           }
         } catch (error) {
           console.error(`Failed to load settlement data for ${vendor}:`, error);
@@ -411,6 +423,20 @@ const ResultHistory: React.FC = () => {
     }
     
     return data.filter(item => item.match_status === filter);
+  };
+  
+  const getMatchCountInfo = (vendor: string, type: string) => {
+    const vendorData = vendorDataList.find(v => v.vendor === vendor);
+    if (!vendorData) return null;
+    
+    if (type === 'settlement' && vendorData.settlementMetadata) {
+      return {
+        matchCount: vendorData.settlementMetadata.match_count,
+        totalProcessed: vendorData.settlementMetadata.match_count + vendorData.settlementMetadata.mismatch_count
+      };
+    }
+    
+    return null;
   };
 
   const downloadTableAsCSV = (vendor: string, type: 'recon' | 'settlement') => {
@@ -562,18 +588,22 @@ const ResultHistory: React.FC = () => {
     },
     {
       title: 'Amount',
-      dataIndex: 'amount',
-      key: 'amount',
+      dataIndex: 'settlement_amount',
+      key: 'settlement_amount',
       width: 130,
-      render: (value: number | undefined) => {
-        if (value === undefined || value === null || value === 0) {
+      render: (value: string | number | undefined) => {
+        if (value === undefined || value === null || value === '' || value === 0) {
+          return '-';
+        }
+        const numValue = typeof value === 'string' ? parseFloat(value) : value;
+        if (isNaN(numValue)) {
           return '-';
         }
         return new Intl.NumberFormat('id-ID', {
           style: 'currency',
           currency: 'IDR',
           minimumFractionDigits: 2,
-        }).format(value);
+        }).format(numValue);
       },
     },
     {
@@ -852,7 +882,11 @@ const ResultHistory: React.FC = () => {
                               <Card size="small" style={{ backgroundColor: colors.successBg }}>
                                 <Statistic
                                   title="Settlement Total"
-                                  value={vendorData.settlementData.length}
+                                  value={
+                                    vendorData.settlementMetadata 
+                                      ? (vendorData.settlementMetadata.match_count + vendorData.settlementMetadata.mismatch_count)
+                                      : vendorData.settlementData.length
+                                  }
                                   valueStyle={{ color: '#1890ff', fontSize: 20 }}
                                 />
                               </Card>
@@ -861,7 +895,7 @@ const ResultHistory: React.FC = () => {
                               <Card size="small" style={{ backgroundColor: colors.successBg }}>
                                 <Statistic
                                   title="Settlement Match"
-                                  value={vendorData.settlementData.filter(d => d.match_status === 'MATCH').length}
+                                  value={vendorData.settlementMetadata?.match_count || vendorData.settlementData.filter(d => d.match_status === 'MATCH').length}
                                   prefix={<CheckCircleOutlined />}
                                   valueStyle={{ color: '#52c41a', fontSize: 20 }}
                                 />
@@ -871,7 +905,7 @@ const ResultHistory: React.FC = () => {
                               <Card size="small" style={{ backgroundColor: colors.warningBg }}>
                                 <Statistic
                                   title="Only in Core"
-                                  value={vendorData.settlementData.filter(d => d.match_status === 'ONLY_IN_CORE').length}
+                                  value={vendorData.settlementMetadata?.only_in_core || vendorData.settlementData.filter(d => d.match_status === 'ONLY_IN_CORE').length}
                                   prefix={<CloseCircleOutlined />}
                                   valueStyle={{ color: '#faad14', fontSize: 20 }}
                                 />
@@ -881,7 +915,7 @@ const ResultHistory: React.FC = () => {
                               <Card size="small" style={{ backgroundColor: colors.errorBg }}>
                                 <Statistic
                                   title="Only in Switching"
-                                  value={vendorData.settlementData.filter(d => d.match_status === 'ONLY_IN_SWITCHING').length}
+                                  value={vendorData.settlementMetadata?.only_in_switching || vendorData.settlementData.filter(d => d.match_status === 'ONLY_IN_SWITCHING').length}
                                   prefix={<CloseCircleOutlined />}
                                   valueStyle={{ color: '#ff4d4f', fontSize: 20 }}
                                 />
@@ -973,17 +1007,71 @@ const ResultHistory: React.FC = () => {
                                 </Button>
                               </Space>
                               
-                              <Table
-                                columns={settlementColumns}
-                                dataSource={getFilteredData(vendorData.settlementData, vendorData.vendor, 'settlement')}
-                                rowKey={(record, index) => `${record.rrn}_${index}`}
-                                scroll={{ x: 1200 }}
-                                pagination={{ 
-                                  pageSize: 10, 
-                                  showSizeChanger: true, 
-                                  showTotal: (total) => `Total ${total} records` 
-                                }}
-                              />
+                              {(() => {
+                                const filteredData = getFilteredData(vendorData.settlementData, vendorData.vendor, 'settlement');
+                                const currentFilter = filterStatus[getFilterKey(vendorData.vendor, 'settlement')];
+                                const matchInfo = getMatchCountInfo(vendorData.vendor, 'settlement');
+                                
+                                // Jika filter MATCH dan data kosong (karena backend tidak mengirim MATCH records)
+                                if (currentFilter === 'MATCH' && filteredData.length === 0 && matchInfo) {
+                                  return (
+                                    <div style={{ 
+                                      textAlign: 'center', 
+                                      padding: '60px 20px',
+                                      background: theme === 'dark' 
+                                        ? 'linear-gradient(135deg, #1a472a 0%, #2d5f3f 100%)'
+                                        : 'linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)',
+                                      borderRadius: '8px',
+                                      border: theme === 'dark' ? '1px solid #2d5f3f' : '1px solid #c3e6cb',
+                                      color: theme === 'dark' ? '#95de64' : '#155724'
+                                    }}>
+                                      <CheckCircleOutlined style={{ 
+                                        fontSize: 64, 
+                                        marginBottom: 16,
+                                        color: theme === 'dark' ? '#52c41a' : '#28a745'
+                                      }} />
+                                      <Title level={3} style={{ 
+                                        color: theme === 'dark' ? '#95de64' : '#155724', 
+                                        marginBottom: 8 
+                                      }}>
+                                        {matchInfo.matchCount.toLocaleString()} Settlement Records MATCH
+                                      </Title>                       
+                                      <div style={{ 
+                                        marginTop: 20, 
+                                        fontSize: 14, 
+                                        color: theme === 'dark' ? 'rgba(149, 222, 100, 0.9)' : '#155724'
+                                      }}>
+                                        <p>📊 Total Data Diproses: <strong>{matchInfo.totalProcessed.toLocaleString()}</strong></p>
+                                        <p>✅ Match: <strong>{matchInfo.matchCount.toLocaleString()}</strong></p>
+                                        <p>❌ Mismatch: <strong>{(matchInfo.totalProcessed - matchInfo.matchCount).toLocaleString()}</strong></p>
+                                      </div>
+                                      <div style={{ marginTop: 24 }}>
+                                        <Text style={{ 
+                                          fontSize: 13, 
+                                          color: theme === 'dark' ? 'rgba(149, 222, 100, 0.7)' : 'rgba(21, 87, 36, 0.8)', 
+                                          fontStyle: 'italic' 
+                                        }}>
+                                          Pilih filter "All", "Only in Core", atau "Only in Switching" untuk melihat data yang tidak match
+                                        </Text>
+                                      </div>
+                                    </div>
+                                  );
+                                }
+                                
+                                return (
+                                  <Table
+                                    columns={settlementColumns}
+                                    dataSource={filteredData}
+                                    rowKey={(record, index) => `${record.rrn}_${index}`}
+                                    scroll={{ x: 1200 }}
+                                    pagination={{ 
+                                      pageSize: 10, 
+                                      showSizeChanger: true, 
+                                      showTotal: (total) => `Total ${total} records` 
+                                    }}
+                                  />
+                                );
+                              })()}
                             </TabPane>
                           )}
                         </Tabs>

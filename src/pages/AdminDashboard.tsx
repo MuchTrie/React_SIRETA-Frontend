@@ -200,13 +200,7 @@ export default function AdminDashboard() {
               value={totalRecons}
               prefix={<FileTextOutlined />}
               valueStyle={{ color: '#1890ff' }}
-              suffix={
-                <span style={{ fontSize: 14, color: '#52c41a' }}>
-                  <ArrowUpOutlined /> 12%
-                </span>
-              }
             />
-            <Text type="secondary" style={{ fontSize: 12 }}>vs bulan lalu</Text>
           </Card>
         </Col>
         <Col xs={24} sm={12}>

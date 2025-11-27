@@ -24,6 +24,12 @@ export interface VendorResult {
   recon_mismatch_count: number;
   settlement_match_count: number;
   settlement_mismatch_count: number;
+  settlement_metadata?: {
+    match_count: number;
+    mismatch_count: number;
+    only_in_core: number;
+    only_in_switching: number;
+  };
 }
 
 export interface ReconciliationData {
