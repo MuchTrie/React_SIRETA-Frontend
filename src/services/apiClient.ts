@@ -1,8 +1,14 @@
 import axios from 'axios';
 
+// Get API base URL from environment variables (WAJIB ada di .env)
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+
+if (!apiBaseUrl) {
+  throw new Error('VITE_API_BASE_URL is not defined in .env file. Please check your environment configuration.');
+}
+
 const apiClient = axios.create({
-  // GANTI INI DENGAN BASE URL API BACKEND ANDA
-  baseURL: 'http://localhost:8080/api', 
+  baseURL: apiBaseUrl,
   headers: {
     'Content-Type': 'application/json',
   },
