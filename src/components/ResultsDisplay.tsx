@@ -20,12 +20,12 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onDownload, onR
   const { theme } = useTheme();
   const navigate = useNavigate();
   const [filterStatus, setFilterStatus] = useState<{ [key: string]: string }>({});
-  
+
   // Duplicate detection states
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [duplicateReport, setDuplicateReport] = useState<DuplicateReport | null>(null);
   const [loadingDuplicate, setLoadingDuplicate] = useState(false);
-  
+
   // Pagination states for duplicate modal
   const [currentPageCore, setCurrentPageCore] = useState(1);
   const [currentPageRecon, setCurrentPageRecon] = useState(1);
@@ -147,12 +147,82 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onDownload, onR
   const getFilteredData = (data: any[], vendor: string, type: string) => {
     const key = getFilterKey(vendor, type);
     const filter = filterStatus[key];
-    
+
     if (!filter || filter === 'ALL') {
       return data;
     }
-    
+
     return data.filter(item => item.match_status === filter);
+  };
+
+  // Fungsi untuk download data yang sudah terfilter sebagai CSV
+  const handleDownloadFilteredData = (vendor: string, type: string, data: any[]) => {
+    const currentFilter = filterStatus[getFilterKey(vendor, type)] || 'ALL';
+    const filteredData = getFilteredData(data, vendor, type);
+
+    if (filteredData.length === 0) {
+      message.warning('Tidak ada data untuk didownload dengan filter saat ini');
+      return;
+    }
+
+    // Define CSV headers based on type
+    const headers = type === 'settlement'
+      ? ['RRN', 'Amount', 'Reff', 'Match Status', 'Source', 'Merchant PAN', 'Interchange Fee', 'Convenience Fee', 'Created Date', 'Created Time', 'Processing Code']
+      : ['RRN', 'Reff', 'Match Status', 'Merchant PAN', 'Merchant Criteria', 'Invoice Number', 'Created Date', 'Created Time', 'Processing Code'];
+
+    // Map data to CSV rows
+    const rows = filteredData.map(item => {
+      if (type === 'settlement') {
+        return [
+          item.rrn || '',
+          item.settlement_amount || item.amount || '',
+          item.reff || '',
+          item.match_status || '',
+          item.source || '',
+          item.merchant_pan || '',
+          item.interchange_fee || '',
+          item.convenience_fee || '',
+          item.created_date || '',
+          item.created_time || '',
+          item.processing_code || ''
+        ];
+      } else {
+        return [
+          item.rrn || '',
+          item.reff || '',
+          item.match_status || '',
+          item.merchant_pan || '',
+          item.merchant_criteria || '',
+          item.invoice_number || '',
+          item.created_date || '',
+          item.created_time || '',
+          item.processing_code || ''
+        ];
+      }
+    });
+
+    // Build CSV content
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+    ].join('\n');
+
+    // Create and download file
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+
+    // Include filter info in filename
+    const filterSuffix = currentFilter !== 'ALL' ? `_${currentFilter.toLowerCase()}` : '';
+    link.download = `${vendor}_${type}_result${filterSuffix}.csv`;
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+
+    message.success(`Berhasil download ${filteredData.length} records (Filter: ${currentFilter})`);
   };
 
   const getMatchCountInfo = (vendor: string) => {
@@ -160,12 +230,12 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onDownload, onR
     if (!vendorObj) {
       return { matchCount: 0, totalProcessed: 0 };
     }
-    
+
     // Gunakan settlement_match_count dan settlement_mismatch_count langsung dari vendor object
     const matchCount = vendorObj.settlement_match_count || 0;
     const mismatchCount = vendorObj.settlement_mismatch_count || 0;
     const totalProcessed = matchCount + mismatchCount;
-    
+
     return { matchCount, totalProcessed };
   };
 
@@ -181,14 +251,14 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onDownload, onR
           recon_count: response.data.recon_duplicates?.length || 0,
           settle_count: response.data.settle_duplicates?.length || 0,
         });
-        
+
         // Validate data structure
         if (!response.data.core_duplicates) response.data.core_duplicates = [];
         if (!response.data.recon_duplicates) response.data.recon_duplicates = [];
         if (!response.data.settle_duplicates) response.data.settle_duplicates = [];
-        
+
         setDuplicateReport(response.data);
-        
+
         // Reset pagination
         setCurrentPageCore(1);
         setCurrentPageRecon(1);
@@ -196,12 +266,12 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onDownload, onR
         setPageSizeCore(5);
         setPageSizeRecon(5);
         setPageSizeSettle(5);
-        
+
         // Open modal after a small delay to ensure state is set
         setTimeout(() => {
           setShowDuplicateModal(true);
         }, 100);
-        
+
         if (response.data.total_duplicates === 0) {
           message.success('Tidak ada RRN duplicate terdeteksi!');
         } else {
@@ -227,17 +297,17 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onDownload, onR
         </Col>
         <Col>
           <Space>
-            <Button 
-              type="primary" 
+            <Button
+              type="primary"
               icon={<HistoryOutlined />}
               onClick={() => navigate('/riwayat-recon')}
             >
               Lihat Riwayat Detail
             </Button>
-            <Button 
+            <Button
               type="default"
               danger
-              icon={<FileSearchOutlined />} 
+              icon={<FileSearchOutlined />}
               onClick={() => handleCheckDuplicate(result.job_id)}
               loading={loadingDuplicate}
             >
@@ -350,7 +420,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onDownload, onR
               <Space style={{ marginBottom: 16 }} size="middle">
                 <FilterOutlined style={{ fontSize: 16 }} />
                 <Text strong>Filter Status:</Text>
-                <Radio.Group 
+                <Radio.Group
                   value={filterStatus[getFilterKey(vendor.vendor, 'settlement')] || 'ALL'}
                   onChange={(e) => handleFilterChange(vendor.vendor, 'settlement', e.target.value)}
                   buttonStyle="solid"
@@ -366,49 +436,47 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onDownload, onR
                     <CloseCircleOutlined /> Only in Switching
                   </Radio.Button>
                 </Radio.Group>
-                {result.download_urls && result.download_urls[`${vendor.vendor}_settlement_result`] && (
-                  <Button
-                    type="primary"
-                    icon={<DownloadOutlined />}
-                    onClick={() => onDownload(result.download_urls![`${vendor.vendor}_settlement_result`])}
-                  >
-                    Download Settlement Result
-                  </Button>
-                )}
+                <Button
+                  type="primary"
+                  icon={<DownloadOutlined />}
+                  onClick={() => handleDownloadFilteredData(vendor.vendor, 'settlement', vendor.settlement_results)}
+                >
+                  Download Settlement Result
+                </Button>
               </Space>
-              
+
               {(() => {
                 const filteredData = getFilteredData(vendor.settlement_results, vendor.vendor, 'settlement');
                 const currentFilter = filterStatus[getFilterKey(vendor.vendor, 'settlement')];
                 const matchInfo = getMatchCountInfo(vendor.vendor);
-                
+
                 // Jika filter MATCH dan data kosong (karena backend tidak mengirim MATCH records)
                 if (currentFilter === 'MATCH' && filteredData.length === 0 && matchInfo) {
                   return (
-                    <div style={{ 
-                      textAlign: 'center', 
+                    <div style={{
+                      textAlign: 'center',
                       padding: '60px 20px',
-                      background: theme === 'dark' 
+                      background: theme === 'dark'
                         ? 'linear-gradient(135deg, #1a472a 0%, #2d5f3f 100%)'
                         : 'linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)',
                       borderRadius: '8px',
                       border: theme === 'dark' ? '1px solid #2d5f3f' : '1px solid #c3e6cb',
                       color: theme === 'dark' ? '#95de64' : '#155724'
                     }}>
-                      <CheckCircleOutlined style={{ 
-                        fontSize: 64, 
+                      <CheckCircleOutlined style={{
+                        fontSize: 64,
                         marginBottom: 16,
                         color: theme === 'dark' ? '#52c41a' : '#28a745'
                       }} />
-                      <Title level={3} style={{ 
-                        color: theme === 'dark' ? '#95de64' : '#155724', 
-                        marginBottom: 8 
+                      <Title level={3} style={{
+                        color: theme === 'dark' ? '#95de64' : '#155724',
+                        marginBottom: 8
                       }}>
                         {matchInfo.matchCount.toLocaleString()} Settlement Records MATCH
-                      </Title>                       
-                      <div style={{ 
-                        marginTop: 20, 
-                        fontSize: 14, 
+                      </Title>
+                      <div style={{
+                        marginTop: 20,
+                        fontSize: 14,
                         color: theme === 'dark' ? 'rgba(149, 222, 100, 0.9)' : '#155724'
                       }}>
                         <p>📊 Total Data Diproses: <strong>{matchInfo.totalProcessed.toLocaleString()}</strong></p>
@@ -416,10 +484,10 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onDownload, onR
                         <p>❌ Mismatch: <strong>{(matchInfo.totalProcessed - matchInfo.matchCount).toLocaleString()}</strong></p>
                       </div>
                       <div style={{ marginTop: 24 }}>
-                        <Text style={{ 
-                          fontSize: 13, 
-                          color: theme === 'dark' ? 'rgba(149, 222, 100, 0.7)' : 'rgba(21, 87, 36, 0.8)', 
-                          fontStyle: 'italic' 
+                        <Text style={{
+                          fontSize: 13,
+                          color: theme === 'dark' ? 'rgba(149, 222, 100, 0.7)' : 'rgba(21, 87, 36, 0.8)',
+                          fontStyle: 'italic'
                         }}>
                           Pilih filter "All", "Only in Core", atau "Only in Switching" untuk melihat data yang tidak match
                         </Text>
@@ -427,17 +495,17 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onDownload, onR
                     </div>
                   );
                 }
-                
+
                 return (
                   <Table
                     columns={settlementColumns}
                     dataSource={filteredData}
                     rowKey={(record, index) => `${record.rrn}_${index}`}
                     scroll={{ x: 1200 }}
-                    pagination={{ 
-                      pageSize: 10, 
-                      showSizeChanger: true, 
-                      showTotal: (total) => `Total ${total} records` 
+                    pagination={{
+                      pageSize: 10,
+                      showSizeChanger: true,
+                      showTotal: (total) => `Total ${total} records`
                     }}
                   />
                 );
@@ -459,10 +527,10 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onDownload, onR
         onCancel={() => setShowDuplicateModal(false)}
         width={1200}
         footer={[
-          <Button 
-            key="download" 
-            type="primary" 
-            icon={<DownloadOutlined />} 
+          <Button
+            key="download"
+            type="primary"
+            icon={<DownloadOutlined />}
             onClick={async () => {
               try {
                 message.loading({ content: 'Mengunduh laporan duplicate...', key: 'download-dup' });
@@ -525,103 +593,103 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onDownload, onR
 
             {/* CORE Duplicates */}
             {duplicateReport.core_duplicates && duplicateReport.core_duplicates.length > 0 && (
-              <Card 
+              <Card
                 title={
                   <Space>
                     <Badge count={duplicateReport.core_duplicates.length} style={{ backgroundColor: '#f5222d' }} />
                     <Text strong>CORE File Duplicates</Text>
                   </Space>
-                } 
+                }
                 size="small"
               >
                 <Collapse accordion destroyInactivePanel>
                   {duplicateReport.core_duplicates
                     .slice((currentPageCore - 1) * pageSizeCore, currentPageCore * pageSizeCore)
                     .map((group, idx) => (
-                    <Collapse.Panel 
-                      key={idx} 
-                      header={
-                        <Space>
-                          <Tag color="red">RRN: {group.rrn}</Tag>
-                          <Text strong>Muncul {group.occurrence_count}x</Text>
-                          <Text type="secondary">Total: Rp {group.total_amount.toLocaleString()}</Text>
-                        </Space>
-                      }
-                    >
-                      <Table
-                        size="small"
-                        dataSource={group.records}
-                        pagination={{
-                          pageSize: 10,
-                          showSizeChanger: true,
-                          pageSizeOptions: ['10', '20', '50'],
-                          showTotal: (total, range) => `${range[0]}-${range[1]} dari ${total} records`
-                        }}
-                        scroll={{ x: 'max-content' }}
-                        columns={[
-                          { 
-                            title: 'Line #', 
-                            dataIndex: 'line_number', 
-                            key: 'line', 
-                            width: 80,
-                            align: 'center' as const,
-                          },
-                          { 
-                            title: 'Vendor', 
-                            dataIndex: 'vendor', 
-                            key: 'vendor', 
-                            width: 100 
-                          },
-                          { 
-                            title: 'Amount', 
-                            dataIndex: 'amount', 
-                            key: 'amount', 
-                            render: (val) => `Rp ${val.toLocaleString()}`, 
-                            width: 150,
-                            align: 'right' as const,
-                          },
-                          { 
-                            title: 'Date', 
-                            dataIndex: 'created_date', 
-                            key: 'date', 
-                            width: 120,
-                            render: (val) => {
-                              if (val && val.length === 8) {
-                                return `${val.substring(6, 8)}/${val.substring(4, 6)}/${val.substring(0, 4)}`;
-                              }
-                              return val;
-                            }
-                          },
-                          { 
-                            title: 'Time', 
-                            dataIndex: 'created_time', 
-                            key: 'time', 
-                            width: 100,
-                            render: (val) => {
-                              if (val && val.length === 6) {
-                                return `${val.substring(0, 2)}:${val.substring(2, 4)}:${val.substring(4, 6)}`;
-                              }
-                              return val;
-                            }
-                          },
-                          { 
-                            title: 'File', 
-                            dataIndex: 'file_name', 
-                            key: 'file',
-                            render: (filePath: string) => {
-                              const parts = filePath.split('\\\\');
-                              const resultsIndex = parts.findIndex(p => p === 'results');
-                              if (resultsIndex >= 0 && parts.length > resultsIndex + 2) {
-                                return `${parts[resultsIndex + 1]}/${parts[parts.length - 1]}`;
-                              }
-                              return parts[parts.length - 1];
+                      <Collapse.Panel
+                        key={idx}
+                        header={
+                          <Space>
+                            <Tag color="red">RRN: {group.rrn}</Tag>
+                            <Text strong>Muncul {group.occurrence_count}x</Text>
+                            <Text type="secondary">Total: Rp {group.total_amount.toLocaleString()}</Text>
+                          </Space>
+                        }
+                      >
+                        <Table
+                          size="small"
+                          dataSource={group.records}
+                          pagination={{
+                            pageSize: 10,
+                            showSizeChanger: true,
+                            pageSizeOptions: ['10', '20', '50'],
+                            showTotal: (total, range) => `${range[0]}-${range[1]} dari ${total} records`
+                          }}
+                          scroll={{ x: 'max-content' }}
+                          columns={[
+                            {
+                              title: 'Line #',
+                              dataIndex: 'line_number',
+                              key: 'line',
+                              width: 80,
+                              align: 'center' as const,
                             },
-                            ellipsis: true,
-                          },
-                        ]}
-                      />
-                    </Collapse.Panel>
-                  ))}
+                            {
+                              title: 'Vendor',
+                              dataIndex: 'vendor',
+                              key: 'vendor',
+                              width: 100
+                            },
+                            {
+                              title: 'Amount',
+                              dataIndex: 'amount',
+                              key: 'amount',
+                              render: (val) => `Rp ${val.toLocaleString()}`,
+                              width: 150,
+                              align: 'right' as const,
+                            },
+                            {
+                              title: 'Date',
+                              dataIndex: 'created_date',
+                              key: 'date',
+                              width: 120,
+                              render: (val) => {
+                                if (val && val.length === 8) {
+                                  return `${val.substring(6, 8)}/${val.substring(4, 6)}/${val.substring(0, 4)}`;
+                                }
+                                return val;
+                              }
+                            },
+                            {
+                              title: 'Time',
+                              dataIndex: 'created_time',
+                              key: 'time',
+                              width: 100,
+                              render: (val) => {
+                                if (val && val.length === 6) {
+                                  return `${val.substring(0, 2)}:${val.substring(2, 4)}:${val.substring(4, 6)}`;
+                                }
+                                return val;
+                              }
+                            },
+                            {
+                              title: 'File',
+                              dataIndex: 'file_name',
+                              key: 'file',
+                              render: (filePath: string) => {
+                                const parts = filePath.split('\\\\');
+                                const resultsIndex = parts.findIndex(p => p === 'results');
+                                if (resultsIndex >= 0 && parts.length > resultsIndex + 2) {
+                                  return `${parts[resultsIndex + 1]}/${parts[parts.length - 1]}`;
+                                }
+                                return parts[parts.length - 1];
+                              },
+                              ellipsis: true,
+                            },
+                          ]}
+                        />
+                      </Collapse.Panel>
+                    ))}
                 </Collapse>
                 <div style={{ marginTop: 16, textAlign: 'center' }}>
                   <Pagination
@@ -642,103 +710,103 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onDownload, onR
 
             {/* RECON Duplicates */}
             {duplicateReport.recon_duplicates && duplicateReport.recon_duplicates.length > 0 && (
-              <Card 
+              <Card
                 title={
                   <Space>
                     <Badge count={duplicateReport.recon_duplicates.length} style={{ backgroundColor: '#fa8c16' }} />
                     <Text strong>Recon File Duplicates</Text>
                   </Space>
-                } 
+                }
                 size="small"
               >
                 <Collapse accordion destroyInactivePanel>
                   {duplicateReport.recon_duplicates
                     .slice((currentPageRecon - 1) * pageSizeRecon, currentPageRecon * pageSizeRecon)
                     .map((group, idx) => (
-                    <Collapse.Panel 
-                      key={idx} 
-                      header={
-                        <Space>
-                          <Tag color="orange">RRN: {group.rrn}</Tag>
-                          <Text strong>Muncul {group.occurrence_count}x</Text>
-                          <Text type="secondary">Total: Rp {group.total_amount.toLocaleString()}</Text>
-                        </Space>
-                      }
-                    >
-                      <Table
-                        size="small"
-                        dataSource={group.records}
-                        pagination={{
-                          pageSize: 10,
-                          showSizeChanger: true,
-                          pageSizeOptions: ['10', '20', '50'],
-                          showTotal: (total, range) => `${range[0]}-${range[1]} dari ${total} records`
-                        }}
-                        scroll={{ x: 'max-content' }}
-                        columns={[
-                          { 
-                            title: 'Line #', 
-                            dataIndex: 'line_number', 
-                            key: 'line', 
-                            width: 80,
-                            align: 'center' as const,
-                          },
-                          { 
-                            title: 'Vendor', 
-                            dataIndex: 'vendor', 
-                            key: 'vendor', 
-                            width: 100 
-                          },
-                          { 
-                            title: 'Amount', 
-                            dataIndex: 'amount', 
-                            key: 'amount', 
-                            render: (val) => `Rp ${val.toLocaleString()}`, 
-                            width: 150,
-                            align: 'right' as const,
-                          },
-                          { 
-                            title: 'Date', 
-                            dataIndex: 'created_date', 
-                            key: 'date', 
-                            width: 120,
-                            render: (val) => {
-                              if (val && val.length === 8) {
-                                return `${val.substring(6, 8)}/${val.substring(4, 6)}/${val.substring(0, 4)}`;
-                              }
-                              return val;
-                            }
-                          },
-                          { 
-                            title: 'Time', 
-                            dataIndex: 'created_time', 
-                            key: 'time', 
-                            width: 100,
-                            render: (val) => {
-                              if (val && val.length === 6) {
-                                return `${val.substring(0, 2)}:${val.substring(2, 4)}:${val.substring(4, 6)}`;
-                              }
-                              return val;
-                            }
-                          },
-                          { 
-                            title: 'File', 
-                            dataIndex: 'file_name', 
-                            key: 'file',
-                            render: (filePath: string) => {
-                              const parts = filePath.split('\\\\');
-                              const resultsIndex = parts.findIndex(p => p === 'results');
-                              if (resultsIndex >= 0 && parts.length > resultsIndex + 2) {
-                                return `${parts[resultsIndex + 1]}/${parts[parts.length - 1]}`;
-                              }
-                              return parts[parts.length - 1];
+                      <Collapse.Panel
+                        key={idx}
+                        header={
+                          <Space>
+                            <Tag color="orange">RRN: {group.rrn}</Tag>
+                            <Text strong>Muncul {group.occurrence_count}x</Text>
+                            <Text type="secondary">Total: Rp {group.total_amount.toLocaleString()}</Text>
+                          </Space>
+                        }
+                      >
+                        <Table
+                          size="small"
+                          dataSource={group.records}
+                          pagination={{
+                            pageSize: 10,
+                            showSizeChanger: true,
+                            pageSizeOptions: ['10', '20', '50'],
+                            showTotal: (total, range) => `${range[0]}-${range[1]} dari ${total} records`
+                          }}
+                          scroll={{ x: 'max-content' }}
+                          columns={[
+                            {
+                              title: 'Line #',
+                              dataIndex: 'line_number',
+                              key: 'line',
+                              width: 80,
+                              align: 'center' as const,
                             },
-                            ellipsis: true,
-                          },
-                        ]}
-                      />
-                    </Collapse.Panel>
-                  ))}
+                            {
+                              title: 'Vendor',
+                              dataIndex: 'vendor',
+                              key: 'vendor',
+                              width: 100
+                            },
+                            {
+                              title: 'Amount',
+                              dataIndex: 'amount',
+                              key: 'amount',
+                              render: (val) => `Rp ${val.toLocaleString()}`,
+                              width: 150,
+                              align: 'right' as const,
+                            },
+                            {
+                              title: 'Date',
+                              dataIndex: 'created_date',
+                              key: 'date',
+                              width: 120,
+                              render: (val) => {
+                                if (val && val.length === 8) {
+                                  return `${val.substring(6, 8)}/${val.substring(4, 6)}/${val.substring(0, 4)}`;
+                                }
+                                return val;
+                              }
+                            },
+                            {
+                              title: 'Time',
+                              dataIndex: 'created_time',
+                              key: 'time',
+                              width: 100,
+                              render: (val) => {
+                                if (val && val.length === 6) {
+                                  return `${val.substring(0, 2)}:${val.substring(2, 4)}:${val.substring(4, 6)}`;
+                                }
+                                return val;
+                              }
+                            },
+                            {
+                              title: 'File',
+                              dataIndex: 'file_name',
+                              key: 'file',
+                              render: (filePath: string) => {
+                                const parts = filePath.split('\\\\');
+                                const resultsIndex = parts.findIndex(p => p === 'results');
+                                if (resultsIndex >= 0 && parts.length > resultsIndex + 2) {
+                                  return `${parts[resultsIndex + 1]}/${parts[parts.length - 1]}`;
+                                }
+                                return parts[parts.length - 1];
+                              },
+                              ellipsis: true,
+                            },
+                          ]}
+                        />
+                      </Collapse.Panel>
+                    ))}
                 </Collapse>
                 <div style={{ marginTop: 16, textAlign: 'center' }}>
                   <Pagination
@@ -759,113 +827,113 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onDownload, onR
 
             {/* SETTLEMENT Duplicates */}
             {duplicateReport.settle_duplicates && duplicateReport.settle_duplicates.length > 0 && (
-              <Card 
+              <Card
                 title={
                   <Space>
                     <Badge count={duplicateReport.settle_duplicates.length} style={{ backgroundColor: '#1890ff' }} />
                     <Text strong>Settlement File Duplicates</Text>
                   </Space>
-                } 
+                }
                 size="small"
               >
                 <Collapse accordion destroyInactivePanel>
                   {duplicateReport.settle_duplicates
                     .slice((currentPageSettle - 1) * pageSizeSettle, currentPageSettle * pageSizeSettle)
                     .map((group, idx) => (
-                    <Collapse.Panel 
-                      key={idx} 
-                      header={
-                        <Space>
-                          <Tag color="blue">RRN: {group.rrn}</Tag>
-                          <Text strong>Muncul {group.occurrence_count}x</Text>
-                          <Text type="secondary">Total: Rp {group.total_amount.toLocaleString()}</Text>
-                        </Space>
-                      }
-                    >
-                      <Table
-                        size="small"
-                        dataSource={group.records}
-                        pagination={{
-                          pageSize: 10,
-                          showSizeChanger: true,
-                          pageSizeOptions: ['10', '20', '50'],
-                          showTotal: (total, range) => `${range[0]}-${range[1]} dari ${total} records`
-                        }}
-                        scroll={{ x: 'max-content' }}
-                        columns={[
-                          { 
-                            title: 'Line #', 
-                            dataIndex: 'line_number', 
-                            key: 'line', 
-                            width: 80,
-                            align: 'center' as const,
-                          },
-                          { 
-                            title: 'Vendor', 
-                            dataIndex: 'vendor', 
-                            key: 'vendor', 
-                            width: 100 
-                          },
-                          { 
-                            title: 'Amount', 
-                            dataIndex: 'amount', 
-                            key: 'amount', 
-                            render: (val) => `Rp ${val.toLocaleString()}`, 
-                            width: 150,
-                            align: 'right' as const,
-                          },
-                          { 
-                            title: 'Date', 
-                            dataIndex: 'created_date', 
-                            key: 'date', 
-                            width: 120,
-                            render: (val) => {
-                              if (!val) return val;
-                              if (val.includes('/')) {
-                                const parts = val.split('/');
-                                if (parts.length === 3 && parts[2].length === 2) {
-                                  return `${parts[0]}/${parts[1]}/20${parts[2]}`;
+                      <Collapse.Panel
+                        key={idx}
+                        header={
+                          <Space>
+                            <Tag color="blue">RRN: {group.rrn}</Tag>
+                            <Text strong>Muncul {group.occurrence_count}x</Text>
+                            <Text type="secondary">Total: Rp {group.total_amount.toLocaleString()}</Text>
+                          </Space>
+                        }
+                      >
+                        <Table
+                          size="small"
+                          dataSource={group.records}
+                          pagination={{
+                            pageSize: 10,
+                            showSizeChanger: true,
+                            pageSizeOptions: ['10', '20', '50'],
+                            showTotal: (total, range) => `${range[0]}-${range[1]} dari ${total} records`
+                          }}
+                          scroll={{ x: 'max-content' }}
+                          columns={[
+                            {
+                              title: 'Line #',
+                              dataIndex: 'line_number',
+                              key: 'line',
+                              width: 80,
+                              align: 'center' as const,
+                            },
+                            {
+                              title: 'Vendor',
+                              dataIndex: 'vendor',
+                              key: 'vendor',
+                              width: 100
+                            },
+                            {
+                              title: 'Amount',
+                              dataIndex: 'amount',
+                              key: 'amount',
+                              render: (val) => `Rp ${val.toLocaleString()}`,
+                              width: 150,
+                              align: 'right' as const,
+                            },
+                            {
+                              title: 'Date',
+                              dataIndex: 'created_date',
+                              key: 'date',
+                              width: 120,
+                              render: (val) => {
+                                if (!val) return val;
+                                if (val.includes('/')) {
+                                  const parts = val.split('/');
+                                  if (parts.length === 3 && parts[2].length === 2) {
+                                    return `${parts[0]}/${parts[1]}/20${parts[2]}`;
+                                  }
+                                  return val;
+                                }
+                                if (val.length === 8) {
+                                  return `${val.substring(6, 8)}/${val.substring(4, 6)}/${val.substring(0, 4)}`;
                                 }
                                 return val;
                               }
-                              if (val.length === 8) {
-                                return `${val.substring(6, 8)}/${val.substring(4, 6)}/${val.substring(0, 4)}`;
-                              }
-                              return val;
-                            }
-                          },
-                          { 
-                            title: 'Time', 
-                            dataIndex: 'created_time', 
-                            key: 'time', 
-                            width: 100,
-                            render: (val) => {
-                              if (!val) return val;
-                              if (val.includes(':')) return val;
-                              if (val.length === 6) {
-                                return `${val.substring(0, 2)}:${val.substring(2, 4)}:${val.substring(4, 6)}`;
-                              }
-                              return val;
-                            }
-                          },
-                          { 
-                            title: 'File', 
-                            dataIndex: 'file_name', 
-                            key: 'file',
-                            render: (filePath: string) => {
-                              const parts = filePath.split('\\\\');
-                              const resultsIndex = parts.findIndex(p => p === 'results');
-                              if (resultsIndex >= 0 && parts.length > resultsIndex + 2) {
-                                return `${parts[resultsIndex + 1]}/${parts[parts.length - 1]}`;
-                              }
-                              return parts[parts.length - 1];
                             },
-                            ellipsis: true,
-                          },
-                        ]}
-                      />
-                    </Collapse.Panel>
-                  ))}
+                            {
+                              title: 'Time',
+                              dataIndex: 'created_time',
+                              key: 'time',
+                              width: 100,
+                              render: (val) => {
+                                if (!val) return val;
+                                if (val.includes(':')) return val;
+                                if (val.length === 6) {
+                                  return `${val.substring(0, 2)}:${val.substring(2, 4)}:${val.substring(4, 6)}`;
+                                }
+                                return val;
+                              }
+                            },
+                            {
+                              title: 'File',
+                              dataIndex: 'file_name',
+                              key: 'file',
+                              render: (filePath: string) => {
+                                const parts = filePath.split('\\\\');
+                                const resultsIndex = parts.findIndex(p => p === 'results');
+                                if (resultsIndex >= 0 && parts.length > resultsIndex + 2) {
+                                  return `${parts[resultsIndex + 1]}/${parts[parts.length - 1]}`;
+                                }
+                                return parts[parts.length - 1];
+                              },
+                              ellipsis: true,
+                            },
+                          ]}
+                        />
+                      </Collapse.Panel>
+                    ))}
                 </Collapse>
                 <div style={{ marginTop: 16, textAlign: 'center' }}>
                   <Pagination
