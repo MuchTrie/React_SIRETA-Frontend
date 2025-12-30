@@ -58,6 +58,14 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onDownload, onR
   // Settlement columns - sama seperti di ResultHistory
   const settlementColumns: ColumnsType<any> = [
     {
+      title: 'No.',
+      key: 'no',
+      width: 60,
+      fixed: 'left',
+      align: 'center' as const,
+      render: (_: any, __: any, index: number) => index + 1,
+    },
+    {
       title: 'RRN',
       dataIndex: 'rrn',
       key: 'rrn',
@@ -119,6 +127,37 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onDownload, onR
       dataIndex: 'merchant_pan',
       key: 'merchant_pan',
       width: 180,
+    },
+    {
+      title: 'Merchant Name',
+      dataIndex: 'merchant_name',
+      key: 'merchant_name',
+      width: 180,
+      render: (value: string) => {
+        if (!value) return '-';
+        // Location is always last 2 words (e.g., "JAKARTA ID")
+        // Merchant name is everything before that
+        const words = value.trim().split(/\s+/);
+        if (words.length > 2) {
+          return words.slice(0, -2).join(' ');
+        }
+        return value;
+      },
+    },
+    {
+      title: 'Location',
+      dataIndex: 'merchant_name',
+      key: 'location',
+      width: 150,
+      render: (value: string) => {
+        if (!value) return '-';
+        // Location is always last 2 words (e.g., "JAKARTA ID")
+        const words = value.trim().split(/\s+/);
+        if (words.length >= 2) {
+          return words.slice(-2).join(' ');
+        }
+        return '-';
+      },
     },
     {
       title: 'Interchange Fee',

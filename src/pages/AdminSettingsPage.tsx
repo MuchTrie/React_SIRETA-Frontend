@@ -5,7 +5,7 @@ import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
 import { getSettings, updateSettings, FeatureSettings } from '../services/settingsApi';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import axios from 'axios';
+import apiClient from '../services/apiClient';
 
 const { Title, Text } = Typography;
 
@@ -13,21 +13,21 @@ export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<FeatureSettings | null>(null);
   const [loading, setLoading] = useState(true); // Ini untuk loading awal
   const [saving, setSaving] = useState(false); // Ini untuk saat klik simpan
-  
+
   // Profile settings state
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileSuccess, setProfileSuccess] = useState('');
   const [profileError, setProfileError] = useState('');
-  
+
   // Password settings state (separate from profile)
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [passwordSuccess, setPasswordSuccess] = useState('');
   const [passwordError, setPasswordError] = useState('');
-  
+
   const { user, updateUser, refreshSettings } = useAuth();
   const { theme } = useTheme();
   const [profileForm] = Form.useForm();
-  
+
   // Theme colors - menggunakan ConfigProvider
   const textColor = theme === 'dark' ? 'rgba(255, 255, 255, 0.95)' : 'rgba(0, 0, 0, 0.88)';
 
@@ -95,15 +95,9 @@ export default function AdminSettingsPage() {
     setProfileSuccess('');
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.put('http://localhost:8080/api/profile', {
+      const response = await apiClient.put('/profile', {
         username: values.username,
         email: values.email
-      }, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
       });
 
       if (response.data.success) {
@@ -124,15 +118,9 @@ export default function AdminSettingsPage() {
     setPasswordSuccess('');
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.put('http://localhost:8080/api/change-password', {
+      const response = await apiClient.put('/change-password', {
         currentPassword: values.currentPassword,
         newPassword: values.newPassword
-      }, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
       });
 
       if (response.data.success) {
@@ -157,7 +145,7 @@ export default function AdminSettingsPage() {
       <Card>
         <Title level={2}>Pengaturan Fitur</Title>
         <Text type="secondary">Aktifkan atau nonaktifkan fitur yang dapat diakses oleh user operasional.</Text>
-        
+
         {/* Kita tambahkan pengecekan: 
           Hanya tampilkan tombol jika loading SELESAI dan settings ADA
         */}
@@ -165,7 +153,7 @@ export default function AdminSettingsPage() {
           <div style={{ marginTop: 24 }}>
             <div style={styles.settingItem}>
               <Text strong>Proses Rekonsiliasi</Text>
-              <Switch 
+              <Switch
                 checked={settings.isProsesReconEnabled}
                 onChange={(checked) => handleToggle('isProsesReconEnabled', checked)}
               />
@@ -193,10 +181,10 @@ export default function AdminSettingsPage() {
             </div>
           )
         )}
-        
-        <Button 
-          type="primary" 
-          style={{ marginTop: 24 }} 
+
+        <Button
+          type="primary"
+          style={{ marginTop: 24 }}
           onClick={handleSaveChanges}
           loading={saving} // 'loading' di sini untuk tombol "Simpan"
           disabled={loading || !settings} // Nonaktifkan tombol jika masih loading awal
@@ -212,8 +200,8 @@ export default function AdminSettingsPage() {
         </Title>
 
         {/* Profile Information */}
-        <Card 
-          title="Informasi Profil" 
+        <Card
+          title="Informasi Profil"
           style={{ marginBottom: '24px' }}
         >
           {profileSuccess && <Alert message={profileSuccess} type="success" showIcon style={{ marginBottom: 16 }} />}
@@ -236,9 +224,9 @@ export default function AdminSettingsPage() {
                     { min: 3, message: 'Username minimal 3 karakter!' }
                   ]}
                 >
-                  <Input 
-                    prefix={<UserOutlined />} 
-                    placeholder="Masukkan username" 
+                  <Input
+                    prefix={<UserOutlined />}
+                    placeholder="Masukkan username"
                   />
                 </Form.Item>
 
@@ -250,9 +238,9 @@ export default function AdminSettingsPage() {
                     { type: 'email', message: 'Format email tidak valid!' }
                   ]}
                 >
-                  <Input 
-                    prefix={<MailOutlined />} 
-                    placeholder="Masukkan email" 
+                  <Input
+                    prefix={<MailOutlined />}
+                    placeholder="Masukkan email"
                   />
                 </Form.Item>
 
@@ -269,12 +257,12 @@ export default function AdminSettingsPage() {
         </Card>
 
         {/* Change Password */}
-        <Card 
+        <Card
           title="Ubah Password"
         >
           {passwordSuccess && <Alert message={passwordSuccess} type="success" showIcon style={{ marginBottom: 16 }} />}
           {passwordError && <Alert message={passwordError} type="error" showIcon style={{ marginBottom: 16 }} />}
-          
+
           <Spin spinning={passwordLoading}>
             <Form
               form={profileForm}
@@ -286,9 +274,9 @@ export default function AdminSettingsPage() {
                 name="currentPassword"
                 rules={[{ required: true, message: 'Password saat ini harus diisi!' }]}
               >
-                <Input.Password 
-                  prefix={<LockOutlined />} 
-                  placeholder="Masukkan password saat ini" 
+                <Input.Password
+                  prefix={<LockOutlined />}
+                  placeholder="Masukkan password saat ini"
                 />
               </Form.Item>
 
@@ -300,9 +288,9 @@ export default function AdminSettingsPage() {
                   { min: 6, message: 'Password minimal 6 karakter!' }
                 ]}
               >
-                <Input.Password 
-                  prefix={<LockOutlined />} 
-                  placeholder="Masukkan password baru" 
+                <Input.Password
+                  prefix={<LockOutlined />}
+                  placeholder="Masukkan password baru"
                 />
               </Form.Item>
 
@@ -322,9 +310,9 @@ export default function AdminSettingsPage() {
                   }),
                 ]}
               >
-                <Input.Password 
-                  prefix={<LockOutlined />} 
-                  placeholder="Konfirmasi password baru" 
+                <Input.Password
+                  prefix={<LockOutlined />}
+                  placeholder="Konfirmasi password baru"
                 />
               </Form.Item>
 

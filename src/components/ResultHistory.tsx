@@ -72,12 +72,12 @@ const ResultHistory: React.FC = () => {
   const [vendorDataList, setVendorDataList] = useState<VendorData[]>([]);
   const [loadingData, setLoadingData] = useState(false);
   const [filterStatus, setFilterStatus] = useState<{ [vendorType: string]: string }>({});
-  
+
   // Duplicate detection states
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [duplicateReport, setDuplicateReport] = useState<DuplicateReport | null>(null);
   const [loadingDuplicate, setLoadingDuplicate] = useState(false);
-  
+
   // Pagination states for duplicate modal
   const [currentPageCore, setCurrentPageCore] = useState(1);
   const [currentPageRecon, setCurrentPageRecon] = useState(1);
@@ -203,13 +203,13 @@ const ResultHistory: React.FC = () => {
     if (!folder) return;
 
     const files: ResultFile[] = [];
-    
+
     folder.files.forEach((filename) => {
       if (filename.includes('_result.csv')) {
         const parts = filename.replace('_result.csv', '').split('_');
         const vendor = parts[0];
         const type = parts[1] as 'recon' | 'settlement';
-        
+
         files.push({
           filename,
           vendor: vendor.toUpperCase(),
@@ -231,17 +231,17 @@ const ResultHistory: React.FC = () => {
 
     // Group files by vendor
     const vendorFiles: { [vendor: string]: { recon: boolean; settlement: boolean } } = {};
-    
+
     folder.files.forEach((filename) => {
       if (filename.includes('_result.csv')) {
         const parts = filename.replace('_result.csv', '').split('_');
         const vendor = parts[0].toUpperCase();
         const type = parts[1];
-        
+
         if (!vendorFiles[vendor]) {
           vendorFiles[vendor] = { recon: false, settlement: false };
         }
-        
+
         if (type === 'recon') {
           vendorFiles[vendor].recon = true;
         } else if (type === 'settlement') {
@@ -334,12 +334,12 @@ const ResultHistory: React.FC = () => {
           recon_count: response.data.recon_duplicates?.length || 0,
           settle_count: response.data.settle_duplicates?.length || 0,
         });
-        
+
         // Validate data structure
         if (!response.data.core_duplicates) response.data.core_duplicates = [];
         if (!response.data.recon_duplicates) response.data.recon_duplicates = [];
         if (!response.data.settle_duplicates) response.data.settle_duplicates = [];
-        
+
         // Log large groups that might cause performance issues
         const checkLargeGroups = (groups: any[], type: string) => {
           groups.forEach((group: any, idx: number) => {
@@ -348,13 +348,13 @@ const ResultHistory: React.FC = () => {
             }
           });
         };
-        
+
         checkLargeGroups(response.data.core_duplicates, 'CORE');
         checkLargeGroups(response.data.recon_duplicates, 'RECON');
         checkLargeGroups(response.data.settle_duplicates, 'SETTLEMENT');
-        
+
         setDuplicateReport(response.data);
-        
+
         // Reset pagination
         setCurrentPageCore(1);
         setCurrentPageRecon(1);
@@ -362,12 +362,12 @@ const ResultHistory: React.FC = () => {
         setPageSizeCore(5);
         setPageSizeRecon(5);
         setPageSizeSettle(5);
-        
+
         // Open modal after a small delay to ensure state is set
         setTimeout(() => {
           setShowDuplicateModal(true);
         }, 100);
-        
+
         if (response.data.total_duplicates === 0) {
           message.success('Tidak ada RRN duplicate terdeteksi!');
         } else {
@@ -386,7 +386,7 @@ const ResultHistory: React.FC = () => {
 
   const handleDownloadDuplicateReport = async () => {
     if (!selectedFolder) return;
-    
+
     try {
       message.loading({ content: 'Mengunduh laporan duplicate...', key: 'download-dup' });
       const blob = await reconciliationAPI.downloadDuplicateReport(selectedFolder);
@@ -417,25 +417,25 @@ const ResultHistory: React.FC = () => {
   const getFilteredData = (data: any[], vendor: string, type: string) => {
     const key = getFilterKey(vendor, type);
     const filter = filterStatus[key];
-    
+
     if (!filter || filter === 'ALL') {
       return data;
     }
-    
+
     return data.filter(item => item.match_status === filter);
   };
-  
+
   const getMatchCountInfo = (vendor: string, type: string) => {
     const vendorData = vendorDataList.find(v => v.vendor === vendor);
     if (!vendorData) return null;
-    
+
     if (type === 'settlement' && vendorData.settlementMetadata) {
       return {
         matchCount: vendorData.settlementMetadata.match_count,
         totalProcessed: vendorData.settlementMetadata.match_count + vendorData.settlementMetadata.mismatch_count
       };
     }
-    
+
     return null;
   };
 
@@ -453,11 +453,11 @@ const ResultHistory: React.FC = () => {
 
     // Create CSV content
     let csvContent = '';
-    
+
     if (type === 'recon') {
       // Header
       csvContent = 'RRN,Reff,Status,Match Status,Source,Merchant PAN,Merchant Criteria,Invoice Number,Created Date,Created Time,Process Code\n';
-      
+
       // Rows
       filteredData.forEach((row: ReconciliationData) => {
         csvContent += `${row.rrn},${row.reff},${row.status},${row.match_status},${row.source},${row.merchant_pan},${row.merchant_criteria},${row.invoice_number},${row.created_date},${row.created_time},${row.process_code || ''}\n`;
@@ -465,7 +465,7 @@ const ResultHistory: React.FC = () => {
     } else {
       // Header
       csvContent = 'RRN,Reff,Status,Match Status,Merchant PAN,Interchange Fee,Convenience Fee\n';
-      
+
       // Rows
       filteredData.forEach((row: SettlementData) => {
         csvContent += `${row.rrn},${row.reff},${row.status},${row.match_status},${row.merchant_pan},${row.interchange_fee},${row.convenience_fee || ''}\n`;
@@ -476,23 +476,31 @@ const ResultHistory: React.FC = () => {
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
-    
-    const filterSuffix = filterStatus[getFilterKey(vendor, type)] && filterStatus[getFilterKey(vendor, type)] !== 'ALL' 
-      ? `_${filterStatus[getFilterKey(vendor, type)]}` 
+
+    const filterSuffix = filterStatus[getFilterKey(vendor, type)] && filterStatus[getFilterKey(vendor, type)] !== 'ALL'
+      ? `_${filterStatus[getFilterKey(vendor, type)]}`
       : '';
-    
+
     link.setAttribute('href', url);
     link.setAttribute('download', `${vendor}_${type}_filtered${filterSuffix}_${selectedFolder}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
+
     message.success('File berhasil di-download!');
   };
 
   // Columns for reconciliation table
   const reconColumns: ColumnsType<ReconciliationData> = [
+    {
+      title: 'No.',
+      key: 'no',
+      width: 60,
+      fixed: 'left',
+      align: 'center' as const,
+      render: (_: any, __: any, index: number) => index + 1,
+    },
     {
       title: 'RRN',
       dataIndex: 'rrn',
@@ -546,6 +554,37 @@ const ResultHistory: React.FC = () => {
       width: 150,
     },
     {
+      title: 'Merchant Name',
+      dataIndex: 'merchant_name',
+      key: 'merchant_name',
+      width: 180,
+      render: (value: string) => {
+        if (!value) return '-';
+        // Location is always last 2 words (e.g., "JAKARTA ID")
+        // Merchant name is everything before that
+        const words = value.trim().split(/\s+/);
+        if (words.length > 2) {
+          return words.slice(0, -2).join(' ');
+        }
+        return value;
+      },
+    },
+    {
+      title: 'Location',
+      dataIndex: 'merchant_name',
+      key: 'location',
+      width: 150,
+      render: (value: string) => {
+        if (!value) return '-';
+        // Location is always last 2 words (e.g., "JAKARTA ID")
+        const words = value.trim().split(/\s+/);
+        if (words.length >= 2) {
+          return words.slice(-2).join(' ');
+        }
+        return '-';
+      },
+    },
+    {
       title: 'Merchant Criteria',
       dataIndex: 'merchant_criteria',
       key: 'merchant_criteria',
@@ -579,6 +618,14 @@ const ResultHistory: React.FC = () => {
 
   // Columns for settlement table
   const settlementColumns: ColumnsType<SettlementData> = [
+    {
+      title: 'No.',
+      key: 'no',
+      width: 60,
+      fixed: 'left',
+      align: 'center' as const,
+      render: (_: any, __: any, index: number) => index + 1,
+    },
     {
       title: 'RRN',
       dataIndex: 'rrn',
@@ -652,6 +699,37 @@ const ResultHistory: React.FC = () => {
       width: 150,
     },
     {
+      title: 'Merchant Name',
+      dataIndex: 'merchant_name',
+      key: 'merchant_name',
+      width: 180,
+      render: (value: string) => {
+        if (!value) return '-';
+        // Location is always last 2 words (e.g., "JAKARTA ID")
+        // Merchant name is everything before that
+        const words = value.trim().split(/\s+/);
+        if (words.length > 2) {
+          return words.slice(0, -2).join(' ');
+        }
+        return value;
+      },
+    },
+    {
+      title: 'Location',
+      dataIndex: 'merchant_name',
+      key: 'location',
+      width: 150,
+      render: (value: string) => {
+        if (!value) return '-';
+        // Location is always last 2 words (e.g., "JAKARTA ID")
+        const words = value.trim().split(/\s+/);
+        if (words.length >= 2) {
+          return words.slice(-2).join(' ');
+        }
+        return '-';
+      },
+    },
+    {
       title: 'Interchange Fee',
       dataIndex: 'interchange_fee',
       key: 'interchange_fee',
@@ -680,7 +758,7 @@ const ResultHistory: React.FC = () => {
               <Space wrap>
                 <FilterOutlined style={{ fontSize: 20, color: '#1890ff' }} />
                 <Text strong>Filter:</Text>
-                
+
                 <Select
                   style={{ width: 150 }}
                   placeholder="Pilih ID"
@@ -748,10 +826,10 @@ const ResultHistory: React.FC = () => {
                 Refresh
               </Button>
               {selectedFolder && (
-                <Button 
+                <Button
                   type="default"
                   danger
-                  icon={<FileSearchOutlined />} 
+                  icon={<FileSearchOutlined />}
                   onClick={() => handleCheckDuplicate(selectedFolder)}
                   loading={loadingDuplicate}
                 >
@@ -770,7 +848,7 @@ const ResultHistory: React.FC = () => {
                   <span>Hasil Rekonsiliasi - {extractDate(selectedFolder)}</span>
                 </Space>
               </Title>
-              
+
               {loadingData ? (
                 <div style={{ textAlign: 'center', padding: '50px' }}>
                   <Spin size="large" />
@@ -798,7 +876,7 @@ const ResultHistory: React.FC = () => {
                             </Button>
                           ))}
                         </Space>
-                        
+
                         {/* Download Converted Settlement CSV Files */}
                         {folders.find(f => f.name === selectedFolder)?.files
                           .filter(f => f.includes('_settlement_') && f.endsWith('.csv') && !f.includes('_result.csv'))
@@ -883,7 +961,7 @@ const ResultHistory: React.FC = () => {
                                 <Statistic
                                   title="Settlement Total"
                                   value={
-                                    vendorData.settlementMetadata 
+                                    vendorData.settlementMetadata
                                       ? (vendorData.settlementMetadata.match_count + vendorData.settlementMetadata.mismatch_count)
                                       : vendorData.settlementData.length
                                   }
@@ -927,15 +1005,15 @@ const ResultHistory: React.FC = () => {
                         {/* Tabs for Recon and Settlement */}
                         <Tabs defaultActiveKey="recon">
                           {vendorData.reconData.length > 0 && (
-                            <TabPane 
-                              tab={`Reconciliation (${vendorData.reconData.length})`} 
+                            <TabPane
+                              tab={`Reconciliation (${vendorData.reconData.length})`}
                               key="recon"
                             >
                               {/* Filter and Download Controls */}
                               <Space style={{ marginBottom: 16 }} size="middle">
                                 <FilterOutlined style={{ fontSize: 16 }} />
                                 <Text strong>Filter Status:</Text>
-                                <Radio.Group 
+                                <Radio.Group
                                   value={filterStatus[getFilterKey(vendorData.vendor, 'recon')] || 'ALL'}
                                   onChange={(e) => handleFilterChange(vendorData.vendor, 'recon', e.target.value)}
                                   buttonStyle="solid"
@@ -951,38 +1029,38 @@ const ResultHistory: React.FC = () => {
                                     <CloseCircleOutlined /> Only in Switching
                                   </Radio.Button>
                                 </Radio.Group>
-                                <Button 
-                                  type="primary" 
+                                <Button
+                                  type="primary"
                                   icon={<DownloadOutlined />}
                                   onClick={() => downloadTableAsCSV(vendorData.vendor, 'recon')}
                                 >
                                   Download Filtered Data
                                 </Button>
                               </Space>
-                              
+
                               <Table
                                 columns={reconColumns}
                                 dataSource={getFilteredData(vendorData.reconData, vendorData.vendor, 'recon')}
                                 rowKey={(record, index) => `${record.rrn}_${index}`}
                                 scroll={{ x: 1500 }}
-                                pagination={{ 
-                                  pageSize: 10, 
-                                  showSizeChanger: true, 
-                                  showTotal: (total) => `Total ${total} records` 
+                                pagination={{
+                                  pageSize: 10,
+                                  showSizeChanger: true,
+                                  showTotal: (total) => `Total ${total} records`
                                 }}
                               />
                             </TabPane>
                           )}
                           {vendorData.settlementData.length > 0 && (
-                            <TabPane 
-                              tab={`Settlement (${vendorData.settlementData.length})`} 
+                            <TabPane
+                              tab={`Settlement (${vendorData.settlementData.length})`}
                               key="settlement"
                             >
                               {/* Filter and Download Controls */}
                               <Space style={{ marginBottom: 16 }} size="middle">
                                 <FilterOutlined style={{ fontSize: 16 }} />
                                 <Text strong>Filter Status:</Text>
-                                <Radio.Group 
+                                <Radio.Group
                                   value={filterStatus[getFilterKey(vendorData.vendor, 'settlement')] || 'ALL'}
                                   onChange={(e) => handleFilterChange(vendorData.vendor, 'settlement', e.target.value)}
                                   buttonStyle="solid"
@@ -998,47 +1076,47 @@ const ResultHistory: React.FC = () => {
                                     <CloseCircleOutlined /> Only in Switching
                                   </Radio.Button>
                                 </Radio.Group>
-                                <Button 
-                                  type="primary" 
+                                <Button
+                                  type="primary"
                                   icon={<DownloadOutlined />}
                                   onClick={() => downloadTableAsCSV(vendorData.vendor, 'settlement')}
                                 >
                                   Download Filtered Data
                                 </Button>
                               </Space>
-                              
+
                               {(() => {
                                 const filteredData = getFilteredData(vendorData.settlementData, vendorData.vendor, 'settlement');
                                 const currentFilter = filterStatus[getFilterKey(vendorData.vendor, 'settlement')];
                                 const matchInfo = getMatchCountInfo(vendorData.vendor, 'settlement');
-                                
+
                                 // Jika filter MATCH dan data kosong (karena backend tidak mengirim MATCH records)
                                 if (currentFilter === 'MATCH' && filteredData.length === 0 && matchInfo) {
                                   return (
-                                    <div style={{ 
-                                      textAlign: 'center', 
+                                    <div style={{
+                                      textAlign: 'center',
                                       padding: '60px 20px',
-                                      background: theme === 'dark' 
+                                      background: theme === 'dark'
                                         ? 'linear-gradient(135deg, #1a472a 0%, #2d5f3f 100%)'
                                         : 'linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)',
                                       borderRadius: '8px',
                                       border: theme === 'dark' ? '1px solid #2d5f3f' : '1px solid #c3e6cb',
                                       color: theme === 'dark' ? '#95de64' : '#155724'
                                     }}>
-                                      <CheckCircleOutlined style={{ 
-                                        fontSize: 64, 
+                                      <CheckCircleOutlined style={{
+                                        fontSize: 64,
                                         marginBottom: 16,
                                         color: theme === 'dark' ? '#52c41a' : '#28a745'
                                       }} />
-                                      <Title level={3} style={{ 
-                                        color: theme === 'dark' ? '#95de64' : '#155724', 
-                                        marginBottom: 8 
+                                      <Title level={3} style={{
+                                        color: theme === 'dark' ? '#95de64' : '#155724',
+                                        marginBottom: 8
                                       }}>
                                         {matchInfo.matchCount.toLocaleString()} Settlement Records MATCH
-                                      </Title>                       
-                                      <div style={{ 
-                                        marginTop: 20, 
-                                        fontSize: 14, 
+                                      </Title>
+                                      <div style={{
+                                        marginTop: 20,
+                                        fontSize: 14,
                                         color: theme === 'dark' ? 'rgba(149, 222, 100, 0.9)' : '#155724'
                                       }}>
                                         <p>📊 Total Data Diproses: <strong>{matchInfo.totalProcessed.toLocaleString()}</strong></p>
@@ -1046,10 +1124,10 @@ const ResultHistory: React.FC = () => {
                                         <p>❌ Mismatch: <strong>{(matchInfo.totalProcessed - matchInfo.matchCount).toLocaleString()}</strong></p>
                                       </div>
                                       <div style={{ marginTop: 24 }}>
-                                        <Text style={{ 
-                                          fontSize: 13, 
-                                          color: theme === 'dark' ? 'rgba(149, 222, 100, 0.7)' : 'rgba(21, 87, 36, 0.8)', 
-                                          fontStyle: 'italic' 
+                                        <Text style={{
+                                          fontSize: 13,
+                                          color: theme === 'dark' ? 'rgba(149, 222, 100, 0.7)' : 'rgba(21, 87, 36, 0.8)',
+                                          fontStyle: 'italic'
                                         }}>
                                           Pilih filter "All", "Only in Core", atau "Only in Switching" untuk melihat data yang tidak match
                                         </Text>
@@ -1057,17 +1135,17 @@ const ResultHistory: React.FC = () => {
                                     </div>
                                   );
                                 }
-                                
+
                                 return (
                                   <Table
                                     columns={settlementColumns}
                                     dataSource={filteredData}
                                     rowKey={(record, index) => `${record.rrn}_${index}`}
                                     scroll={{ x: 1200 }}
-                                    pagination={{ 
-                                      pageSize: 10, 
-                                      showSizeChanger: true, 
-                                      showTotal: (total) => `Total ${total} records` 
+                                    pagination={{
+                                      pageSize: 10,
+                                      showSizeChanger: true,
+                                      showTotal: (total) => `Total ${total} records`
                                     }}
                                   />
                                 );
@@ -1148,106 +1226,106 @@ const ResultHistory: React.FC = () => {
 
             {/* CORE Duplicates */}
             {duplicateReport.core_duplicates && duplicateReport.core_duplicates.length > 0 && (
-              <Card 
+              <Card
                 title={
                   <Space>
                     <Badge count={duplicateReport.core_duplicates.length} style={{ backgroundColor: '#f5222d' }} />
                     <Text strong>CORE File Duplicates</Text>
                   </Space>
-                } 
+                }
                 size="small"
               >
                 <Collapse accordion destroyInactivePanel>
                   {duplicateReport.core_duplicates
                     .slice((currentPageCore - 1) * pageSizeCore, currentPageCore * pageSizeCore)
                     .map((group, idx) => (
-                    <Panel 
-                      key={idx} 
-                      header={
-                        <Space>
-                          <Tag color="red">RRN: {group.rrn}</Tag>
-                          <Text strong>Muncul {group.occurrence_count}x</Text>
-                          <Text type="secondary">Total: Rp {group.total_amount.toLocaleString()}</Text>
-                        </Space>
-                      }
-                    >
-                      <Table
-                        size="small"
-                        dataSource={group.records}
-                        pagination={{
-                          pageSize: 10,
-                          showSizeChanger: true,
-                          pageSizeOptions: ['10', '20', '50'],
-                          showTotal: (total, range) => `${range[0]}-${range[1]} dari ${total} records`
-                        }}
-                        scroll={{ x: 'max-content' }}
-                        columns={[
-                          { 
-                            title: 'Line #', 
-                            dataIndex: 'line_number', 
-                            key: 'line', 
-                            width: 80,
-                            align: 'center' as const,
-                          },
-                          { 
-                            title: 'Vendor', 
-                            dataIndex: 'vendor', 
-                            key: 'vendor', 
-                            width: 100 
-                          },
-                          { 
-                            title: 'Amount', 
-                            dataIndex: 'amount', 
-                            key: 'amount', 
-                            render: (val) => `Rp ${val.toLocaleString()}`, 
-                            width: 150,
-                            align: 'right' as const,
-                          },
-                          { 
-                            title: 'Date', 
-                            dataIndex: 'created_date', 
-                            key: 'date', 
-                            width: 120,
-                            render: (val) => {
-                              // Format YYYYMMDD to DD/MM/YYYY
-                              if (val && val.length === 8) {
-                                return `${val.substring(6, 8)}/${val.substring(4, 6)}/${val.substring(0, 4)}`;
-                              }
-                              return val;
-                            }
-                          },
-                          { 
-                            title: 'Time', 
-                            dataIndex: 'created_time', 
-                            key: 'time', 
-                            width: 100,
-                            render: (val) => {
-                              // Format HHMMSS to HH:MM:SS
-                              if (val && val.length === 6) {
-                                return `${val.substring(0, 2)}:${val.substring(2, 4)}:${val.substring(4, 6)}`;
-                              }
-                              return val;
-                            }
-                          },
-                          { 
-                            title: 'File', 
-                            dataIndex: 'file_name', 
-                            key: 'file',
-                            render: (filePath: string) => {
-                              // Extract from results/job_id/filename
-                              const parts = filePath.split('\\');
-                              const resultsIndex = parts.findIndex(p => p === 'results');
-                              if (resultsIndex >= 0 && parts.length > resultsIndex + 2) {
-                                return `${parts[resultsIndex + 1]}/${parts[parts.length - 1]}`;
-                              }
-                              return parts[parts.length - 1]; // fallback to filename only
+                      <Panel
+                        key={idx}
+                        header={
+                          <Space>
+                            <Tag color="red">RRN: {group.rrn}</Tag>
+                            <Text strong>Muncul {group.occurrence_count}x</Text>
+                            <Text type="secondary">Total: Rp {group.total_amount.toLocaleString()}</Text>
+                          </Space>
+                        }
+                      >
+                        <Table
+                          size="small"
+                          dataSource={group.records}
+                          pagination={{
+                            pageSize: 10,
+                            showSizeChanger: true,
+                            pageSizeOptions: ['10', '20', '50'],
+                            showTotal: (total, range) => `${range[0]}-${range[1]} dari ${total} records`
+                          }}
+                          scroll={{ x: 'max-content' }}
+                          columns={[
+                            {
+                              title: 'Line #',
+                              dataIndex: 'line_number',
+                              key: 'line',
+                              width: 80,
+                              align: 'center' as const,
                             },
-                            ellipsis: true,
-                          },
-                        ]}
-                      />
-                    </Panel>
-                  ))}
+                            {
+                              title: 'Vendor',
+                              dataIndex: 'vendor',
+                              key: 'vendor',
+                              width: 100
+                            },
+                            {
+                              title: 'Amount',
+                              dataIndex: 'amount',
+                              key: 'amount',
+                              render: (val) => `Rp ${val.toLocaleString()}`,
+                              width: 150,
+                              align: 'right' as const,
+                            },
+                            {
+                              title: 'Date',
+                              dataIndex: 'created_date',
+                              key: 'date',
+                              width: 120,
+                              render: (val) => {
+                                // Format YYYYMMDD to DD/MM/YYYY
+                                if (val && val.length === 8) {
+                                  return `${val.substring(6, 8)}/${val.substring(4, 6)}/${val.substring(0, 4)}`;
+                                }
+                                return val;
+                              }
+                            },
+                            {
+                              title: 'Time',
+                              dataIndex: 'created_time',
+                              key: 'time',
+                              width: 100,
+                              render: (val) => {
+                                // Format HHMMSS to HH:MM:SS
+                                if (val && val.length === 6) {
+                                  return `${val.substring(0, 2)}:${val.substring(2, 4)}:${val.substring(4, 6)}`;
+                                }
+                                return val;
+                              }
+                            },
+                            {
+                              title: 'File',
+                              dataIndex: 'file_name',
+                              key: 'file',
+                              render: (filePath: string) => {
+                                // Extract from results/job_id/filename
+                                const parts = filePath.split('\\');
+                                const resultsIndex = parts.findIndex(p => p === 'results');
+                                if (resultsIndex >= 0 && parts.length > resultsIndex + 2) {
+                                  return `${parts[resultsIndex + 1]}/${parts[parts.length - 1]}`;
+                                }
+                                return parts[parts.length - 1]; // fallback to filename only
+                              },
+                              ellipsis: true,
+                            },
+                          ]}
+                        />
+                      </Panel>
+                    ))}
                 </Collapse>
                 <div style={{ marginTop: 16, textAlign: 'center' }}>
                   <Pagination
@@ -1268,105 +1346,105 @@ const ResultHistory: React.FC = () => {
 
             {/* RECON Duplicates */}
             {duplicateReport.recon_duplicates && duplicateReport.recon_duplicates.length > 0 && (
-              <Card 
+              <Card
                 title={
                   <Space>
                     <Badge count={duplicateReport.recon_duplicates.length} style={{ backgroundColor: '#fa8c16' }} />
                     <Text strong>Reconciliation File Duplicates</Text>
                   </Space>
-                } 
+                }
                 size="small"
               >
                 <Collapse accordion destroyInactivePanel>
                   {duplicateReport.recon_duplicates
                     .slice((currentPageRecon - 1) * pageSizeRecon, currentPageRecon * pageSizeRecon)
                     .map((group, idx) => (
-                    <Panel 
-                      key={idx} 
-                      header={
-                        <Space>
-                          <Tag color="orange">RRN: {group.rrn}</Tag>
-                          <Text strong>Muncul {group.occurrence_count}x</Text>
-                          <Text type="secondary">Total: Rp {group.total_amount.toLocaleString()}</Text>
-                        </Space>
-                      }
-                    >
-                      <Table
-                        size="small"
-                        dataSource={group.records}
-                        pagination={{
-                          pageSize: 10,
-                          showSizeChanger: true,
-                          pageSizeOptions: ['10', '20', '50'],
-                          showTotal: (total, range) => `${range[0]}-${range[1]} dari ${total} records`
-                        }}
-                        scroll={{ x: 'max-content' }}
-                        columns={[
-                          { 
-                            title: 'Line #', 
-                            dataIndex: 'line_number', 
-                            key: 'line', 
-                            width: 80,
-                            align: 'center' as const,
-                          },
-                          { 
-                            title: 'Vendor', 
-                            dataIndex: 'vendor', 
-                            key: 'vendor', 
-                            width: 100 
-                          },
-                          { 
-                            title: 'Amount', 
-                            dataIndex: 'amount', 
-                            key: 'amount', 
-                            render: (val) => `Rp ${val.toLocaleString()}`, 
-                            width: 150,
-                            align: 'right' as const,
-                          },
-                          { 
-                            title: 'Date', 
-                            dataIndex: 'created_date', 
-                            key: 'date', 
-                            width: 120,
-                            render: (val) => {
-                              // Format YYYYMMDD to DD/MM/YYYY
-                              if (val && val.length === 8) {
-                                return `${val.substring(6, 8)}/${val.substring(4, 6)}/${val.substring(0, 4)}`;
-                              }
-                              return val;
-                            }
-                          },
-                          { 
-                            title: 'Time', 
-                            dataIndex: 'created_time', 
-                            key: 'time', 
-                            width: 100,
-                            render: (val) => {
-                              // Format HHMMSS to HH:MM:SS
-                              if (val && val.length === 6) {
-                                return `${val.substring(0, 2)}:${val.substring(2, 4)}:${val.substring(4, 6)}`;
-                              }
-                              return val;
-                            }
-                          },
-                          { 
-                            title: 'File', 
-                            dataIndex: 'file_name', 
-                            key: 'file',
-                            render: (filePath: string) => {
-                              const parts = filePath.split('\\');
-                              const resultsIndex = parts.findIndex(p => p === 'results');
-                              if (resultsIndex >= 0 && parts.length > resultsIndex + 2) {
-                                return `${parts[resultsIndex + 1]}/${parts[parts.length - 1]}`;
-                              }
-                              return parts[parts.length - 1];
+                      <Panel
+                        key={idx}
+                        header={
+                          <Space>
+                            <Tag color="orange">RRN: {group.rrn}</Tag>
+                            <Text strong>Muncul {group.occurrence_count}x</Text>
+                            <Text type="secondary">Total: Rp {group.total_amount.toLocaleString()}</Text>
+                          </Space>
+                        }
+                      >
+                        <Table
+                          size="small"
+                          dataSource={group.records}
+                          pagination={{
+                            pageSize: 10,
+                            showSizeChanger: true,
+                            pageSizeOptions: ['10', '20', '50'],
+                            showTotal: (total, range) => `${range[0]}-${range[1]} dari ${total} records`
+                          }}
+                          scroll={{ x: 'max-content' }}
+                          columns={[
+                            {
+                              title: 'Line #',
+                              dataIndex: 'line_number',
+                              key: 'line',
+                              width: 80,
+                              align: 'center' as const,
                             },
-                            ellipsis: true,
-                          },
-                        ]}
-                      />
-                    </Panel>
-                  ))}
+                            {
+                              title: 'Vendor',
+                              dataIndex: 'vendor',
+                              key: 'vendor',
+                              width: 100
+                            },
+                            {
+                              title: 'Amount',
+                              dataIndex: 'amount',
+                              key: 'amount',
+                              render: (val) => `Rp ${val.toLocaleString()}`,
+                              width: 150,
+                              align: 'right' as const,
+                            },
+                            {
+                              title: 'Date',
+                              dataIndex: 'created_date',
+                              key: 'date',
+                              width: 120,
+                              render: (val) => {
+                                // Format YYYYMMDD to DD/MM/YYYY
+                                if (val && val.length === 8) {
+                                  return `${val.substring(6, 8)}/${val.substring(4, 6)}/${val.substring(0, 4)}`;
+                                }
+                                return val;
+                              }
+                            },
+                            {
+                              title: 'Time',
+                              dataIndex: 'created_time',
+                              key: 'time',
+                              width: 100,
+                              render: (val) => {
+                                // Format HHMMSS to HH:MM:SS
+                                if (val && val.length === 6) {
+                                  return `${val.substring(0, 2)}:${val.substring(2, 4)}:${val.substring(4, 6)}`;
+                                }
+                                return val;
+                              }
+                            },
+                            {
+                              title: 'File',
+                              dataIndex: 'file_name',
+                              key: 'file',
+                              render: (filePath: string) => {
+                                const parts = filePath.split('\\');
+                                const resultsIndex = parts.findIndex(p => p === 'results');
+                                if (resultsIndex >= 0 && parts.length > resultsIndex + 2) {
+                                  return `${parts[resultsIndex + 1]}/${parts[parts.length - 1]}`;
+                                }
+                                return parts[parts.length - 1];
+                              },
+                              ellipsis: true,
+                            },
+                          ]}
+                        />
+                      </Panel>
+                    ))}
                 </Collapse>
                 <div style={{ marginTop: 16, textAlign: 'center' }}>
                   <Pagination
@@ -1387,119 +1465,119 @@ const ResultHistory: React.FC = () => {
 
             {/* SETTLEMENT Duplicates */}
             {duplicateReport.settle_duplicates && duplicateReport.settle_duplicates.length > 0 && (
-              <Card 
+              <Card
                 title={
                   <Space>
                     <Badge count={duplicateReport.settle_duplicates.length} style={{ backgroundColor: '#1890ff' }} />
                     <Text strong>Settlement File Duplicates</Text>
                   </Space>
-                } 
+                }
                 size="small"
               >
                 <Collapse accordion destroyInactivePanel>
                   {duplicateReport.settle_duplicates
                     .slice((currentPageSettle - 1) * pageSizeSettle, currentPageSettle * pageSizeSettle)
                     .map((group, idx) => (
-                    <Panel 
-                      key={idx} 
-                      header={
-                        <Space>
-                          <Tag color="blue">RRN: {group.rrn}</Tag>
-                          <Text strong>Muncul {group.occurrence_count}x</Text>
-                          <Text type="secondary">Total: Rp {group.total_amount.toLocaleString()}</Text>
-                        </Space>
-                      }
-                    >
-                      <Table
-                        size="small"
-                        dataSource={group.records}
-                        pagination={{
-                          pageSize: 10,
-                          showSizeChanger: true,
-                          pageSizeOptions: ['10', '20', '50'],
-                          showTotal: (total, range) => `${range[0]}-${range[1]} dari ${total} records`
-                        }}
-                        scroll={{ x: 'max-content' }}
-                        columns={[
-                          { 
-                            title: 'Line #', 
-                            dataIndex: 'line_number', 
-                            key: 'line', 
-                            width: 80,
-                            align: 'center' as const,
-                          },
-                          { 
-                            title: 'Vendor', 
-                            dataIndex: 'vendor', 
-                            key: 'vendor', 
-                            width: 100 
-                          },
-                          { 
-                            title: 'Amount', 
-                            dataIndex: 'amount', 
-                            key: 'amount', 
-                            render: (val) => `Rp ${val.toLocaleString()}`, 
-                            width: 150,
-                            align: 'right' as const,
-                          },
-                          { 
-                            title: 'Date', 
-                            dataIndex: 'created_date', 
-                            key: 'date', 
-                            width: 120,
-                            render: (val) => {
-                              // Format date for settlement: DD/MM/YY to DD/MM/YYYY or YYYYMMDD to DD/MM/YYYY
-                              if (!val) return val;
-                              // Check if format is DD/MM/YY (e.g., "28/10/25")
-                              if (val.includes('/')) {
-                                const parts = val.split('/');
-                                if (parts.length === 3 && parts[2].length === 2) {
-                                  return `${parts[0]}/${parts[1]}/20${parts[2]}`;
+                      <Panel
+                        key={idx}
+                        header={
+                          <Space>
+                            <Tag color="blue">RRN: {group.rrn}</Tag>
+                            <Text strong>Muncul {group.occurrence_count}x</Text>
+                            <Text type="secondary">Total: Rp {group.total_amount.toLocaleString()}</Text>
+                          </Space>
+                        }
+                      >
+                        <Table
+                          size="small"
+                          dataSource={group.records}
+                          pagination={{
+                            pageSize: 10,
+                            showSizeChanger: true,
+                            pageSizeOptions: ['10', '20', '50'],
+                            showTotal: (total, range) => `${range[0]}-${range[1]} dari ${total} records`
+                          }}
+                          scroll={{ x: 'max-content' }}
+                          columns={[
+                            {
+                              title: 'Line #',
+                              dataIndex: 'line_number',
+                              key: 'line',
+                              width: 80,
+                              align: 'center' as const,
+                            },
+                            {
+                              title: 'Vendor',
+                              dataIndex: 'vendor',
+                              key: 'vendor',
+                              width: 100
+                            },
+                            {
+                              title: 'Amount',
+                              dataIndex: 'amount',
+                              key: 'amount',
+                              render: (val) => `Rp ${val.toLocaleString()}`,
+                              width: 150,
+                              align: 'right' as const,
+                            },
+                            {
+                              title: 'Date',
+                              dataIndex: 'created_date',
+                              key: 'date',
+                              width: 120,
+                              render: (val) => {
+                                // Format date for settlement: DD/MM/YY to DD/MM/YYYY or YYYYMMDD to DD/MM/YYYY
+                                if (!val) return val;
+                                // Check if format is DD/MM/YY (e.g., "28/10/25")
+                                if (val.includes('/')) {
+                                  const parts = val.split('/');
+                                  if (parts.length === 3 && parts[2].length === 2) {
+                                    return `${parts[0]}/${parts[1]}/20${parts[2]}`;
+                                  }
+                                  return val;
+                                }
+                                // Check if format is YYYYMMDD
+                                if (val.length === 8) {
+                                  return `${val.substring(6, 8)}/${val.substring(4, 6)}/${val.substring(0, 4)}`;
                                 }
                                 return val;
                               }
-                              // Check if format is YYYYMMDD
-                              if (val.length === 8) {
-                                return `${val.substring(6, 8)}/${val.substring(4, 6)}/${val.substring(0, 4)}`;
-                              }
-                              return val;
-                            }
-                          },
-                          { 
-                            title: 'Time', 
-                            dataIndex: 'created_time', 
-                            key: 'time', 
-                            width: 100,
-                            render: (val) => {
-                              // Format time: HH:MM:SS (already formatted) or HHMMSS to HH:MM:SS
-                              if (!val) return val;
-                              // Already has colon separator
-                              if (val.includes(':')) return val;
-                              // Format HHMMSS to HH:MM:SS
-                              if (val.length === 6) {
-                                return `${val.substring(0, 2)}:${val.substring(2, 4)}:${val.substring(4, 6)}`;
-                              }
-                              return val;
-                            }
-                          },
-                          { 
-                            title: 'File', 
-                            dataIndex: 'file_name', 
-                            key: 'file',
-                            render: (filePath: string) => {
-                              const parts = filePath.split('\\');
-                              const resultsIndex = parts.findIndex(p => p === 'results');
-                              if (resultsIndex >= 0 && parts.length > resultsIndex + 2) {
-                                return `${parts[resultsIndex + 1]}/${parts[parts.length - 1]}`;
-                              }
-                              return parts[parts.length - 1];
                             },
-                            ellipsis: true,
-                          },
-                        ]}
-                      />
-                    </Panel>
-                  ))}
+                            {
+                              title: 'Time',
+                              dataIndex: 'created_time',
+                              key: 'time',
+                              width: 100,
+                              render: (val) => {
+                                // Format time: HH:MM:SS (already formatted) or HHMMSS to HH:MM:SS
+                                if (!val) return val;
+                                // Already has colon separator
+                                if (val.includes(':')) return val;
+                                // Format HHMMSS to HH:MM:SS
+                                if (val.length === 6) {
+                                  return `${val.substring(0, 2)}:${val.substring(2, 4)}:${val.substring(4, 6)}`;
+                                }
+                                return val;
+                              }
+                            },
+                            {
+                              title: 'File',
+                              dataIndex: 'file_name',
+                              key: 'file',
+                              render: (filePath: string) => {
+                                const parts = filePath.split('\\');
+                                const resultsIndex = parts.findIndex(p => p === 'results');
+                                if (resultsIndex >= 0 && parts.length > resultsIndex + 2) {
+                                  return `${parts[resultsIndex + 1]}/${parts[parts.length - 1]}`;
+                                }
+                                return parts[parts.length - 1];
+                              },
+                              ellipsis: true,
+                            },
+                          ]}
+                        />
+                      </Panel>
+                    ))}
                 </Collapse>
                 <div style={{ marginTop: 16, textAlign: 'center' }}>
                   <Pagination
