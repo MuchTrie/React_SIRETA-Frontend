@@ -15,7 +15,3 @@ npm run dev
 ```
 
 Aplikasi akan berjalan di: **http://localhost:5173**
-
----
-
-**Prerequisites**: Node.js 18.x+, Backend API di http://localhost:8080
