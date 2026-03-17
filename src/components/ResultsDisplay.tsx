@@ -556,6 +556,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onDownload, onR
 
       {/* Duplicate Detection Modal */}
       <Modal
+        className="duplicate-modal"
         title={
           <Space>
             <WarningOutlined style={{ color: '#ff4d4f' }} />
@@ -601,7 +602,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onDownload, onR
             {/* Summary Statistics */}
             <Row gutter={16}>
               <Col span={8}>
-                <Card size="small">
+                <Card size="small" className="duplicate-summary-card">
                   <Statistic
                     title="Total Duplicate RRNs"
                     value={duplicateReport.total_duplicates}
@@ -611,7 +612,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onDownload, onR
                 </Card>
               </Col>
               <Col span={8}>
-                <Card size="small">
+                <Card size="small" className="duplicate-summary-card">
                   <Statistic
                     title="Total Duplicate Records"
                     value={duplicateReport.total_records}
@@ -620,7 +621,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onDownload, onR
                 </Card>
               </Col>
               <Col span={8}>
-                <Card size="small">
+                <Card size="small" className="duplicate-summary-card">
                   <Statistic
                     title="Generated At"
                     value={duplicateReport.generated_at}
@@ -640,6 +641,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onDownload, onR
                   </Space>
                 }
                 size="small"
+                className="duplicate-section-card"
               >
                 <Collapse accordion destroyInactivePanel>
                   {duplicateReport.core_duplicates
@@ -757,6 +759,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onDownload, onR
                   </Space>
                 }
                 size="small"
+                className="duplicate-section-card"
               >
                 <Collapse accordion destroyInactivePanel>
                   {duplicateReport.recon_duplicates
@@ -874,6 +877,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onDownload, onR
                   </Space>
                 }
                 size="small"
+                className="duplicate-section-card"
               >
                 <Collapse accordion destroyInactivePanel>
                   {duplicateReport.settle_duplicates

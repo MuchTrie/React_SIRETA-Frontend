@@ -355,6 +355,63 @@ body {
   background: rgba(15, 23, 42, 0.9);
 }
 
+/* ==============================
+   DUPLICATE RRN MODAL THEME
+================================ */
+
+.duplicate-modal .ant-modal-content {
+  background: #090b16;
+  border-radius: 18px;
+  border: 1px solid rgba(230, 57, 70, 0.5);
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.95),
+    0 0 0 1px rgba(15, 23, 42, 0.9);
+}
+
+.duplicate-modal .ant-modal-header {
+  background: transparent;
+  border-bottom: 1px solid rgba(230, 57, 70, 0.45);
+}
+
+.duplicate-modal .ant-modal-title {
+  color: var(--login-text);
+}
+
+.duplicate-modal .ant-modal-body {
+  background: transparent;
+  padding-top: 18px;
+}
+
+.duplicate-summary-card.ant-card {
+  background: #0b1120;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.9);
+}
+
+.duplicate-summary-card .ant-statistic-title {
+  color: rgba(226, 232, 240, 0.85);
+}
+
+.duplicate-section-card.ant-card {
+  background: #020617;
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+}
+
+.duplicate-section-card .ant-card-head-title,
+.duplicate-section-card .ant-typography,
+.duplicate-section-card .ant-table,
+.duplicate-section-card .ant-table-thead > tr > th,
+.duplicate-section-card .ant-table-tbody > tr > td {
+  color: var(--login-text);
+  background: transparent;
+}
+
+.duplicate-section-card .ant-table-tbody > tr.ant-table-row:hover > td {
+  background: rgba(15, 23, 42, 0.9);
+}
+
 @media (max-width: 480px) {
   .login-card.ant-card {
     padding-inline: 0;

@@ -1172,6 +1172,7 @@ const ResultHistory: React.FC = () => {
 
       {/* Duplicate Detection Modal */}
       <Modal
+        className="duplicate-modal"
         title={
           <Space>
             <WarningOutlined style={{ color: '#ff4d4f' }} />
@@ -1195,7 +1196,7 @@ const ResultHistory: React.FC = () => {
             {/* Summary Statistics */}
             <Row gutter={16}>
               <Col span={8}>
-                <Card size="small">
+                <Card size="small" className="duplicate-summary-card">
                   <Statistic
                     title="Total Duplicate RRNs"
                     value={duplicateReport.total_duplicates}
@@ -1205,7 +1206,7 @@ const ResultHistory: React.FC = () => {
                 </Card>
               </Col>
               <Col span={8}>
-                <Card size="small">
+                <Card size="small" className="duplicate-summary-card">
                   <Statistic
                     title="Total Duplicate Records"
                     value={duplicateReport.total_records}
@@ -1214,7 +1215,7 @@ const ResultHistory: React.FC = () => {
                 </Card>
               </Col>
               <Col span={8}>
-                <Card size="small">
+                <Card size="small" className="duplicate-summary-card">
                   <Statistic
                     title="Generated At"
                     value={duplicateReport.generated_at}
@@ -1234,6 +1235,7 @@ const ResultHistory: React.FC = () => {
                   </Space>
                 }
                 size="small"
+                className="duplicate-section-card"
               >
                 <Collapse accordion destroyInactivePanel>
                   {duplicateReport.core_duplicates
@@ -1354,6 +1356,7 @@ const ResultHistory: React.FC = () => {
                   </Space>
                 }
                 size="small"
+                className="duplicate-section-card"
               >
                 <Collapse accordion destroyInactivePanel>
                   {duplicateReport.recon_duplicates
@@ -1473,6 +1476,7 @@ const ResultHistory: React.FC = () => {
                   </Space>
                 }
                 size="small"
+                className="duplicate-section-card"
               >
                 <Collapse accordion destroyInactivePanel>
                   {duplicateReport.settle_duplicates
