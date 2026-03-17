@@ -88,9 +88,9 @@ export default function MainLayout() {
     }
   };
 
+  const isDark = theme === 'dark';
+
   return (
-    // 5. HAPUS SEMUA style 'background' dari <Layout> ini
-    // Biarkan ConfigProvider yang mengaturnya
     <Layout style={{ minHeight: '100vh' }}>
       <Header style={{ 
         position: 'fixed',
@@ -102,13 +102,19 @@ export default function MainLayout() {
         display: 'flex', 
         justifyContent: 'space-between', 
         alignItems: 'center',
-        borderBottom: `1px solid ${theme === 'dark' ? '#3d3d5c' : '#d9d9d9'}`,
-        color: theme === 'dark' ? 'rgba(255, 255, 255, 0.95)' : 'rgba(0, 0, 0, 0.88)',
-        background: `${theme === 'dark' ? '#001529' : '#ffffff'} !important`,
-        backgroundColor: `${theme === 'dark' ? '#001529' : '#ffffff'} !important`,
+        borderBottom: isDark
+          ? '1px solid rgba(230, 57, 70, 0.65)'
+          : '1px solid #d9d9d9',
+        color: isDark ? 'rgba(249, 250, 251, 0.96)' : 'rgba(0, 0, 0, 0.88)',
+        background: isDark
+          ? 'linear-gradient(90deg, #050509 0%, #0b0b13 50%, #050509 100%)'
+          : '#ffffff !important',
+        backgroundColor: isDark ? '#050509' : '#ffffff',
         backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+        boxShadow: isDark
+          ? '0 10px 30px rgba(0, 0, 0, 0.85)'
+          : '0 2px 8px rgba(0, 0, 0, 0.1)',
       }}>
         <div 
           onClick={() => {
@@ -145,7 +151,7 @@ export default function MainLayout() {
             }} 
           />
           <span className="title-text" style={{ 
-            color: '#2E9FD9',
+            color: isDark ? '#f9fafb' : '#2E9FD9',
             fontWeight: '700',
             letterSpacing: '0.5px',
             textTransform: 'uppercase'
@@ -229,10 +235,15 @@ export default function MainLayout() {
         <Sider
           width={250}
           style={{ 
-            // Hapus 'background: #fff'
-            borderRight: `1px solid ${theme === 'dark' ? '#3d3d5c' : '#d9d9d9'}`,
+            background: isDark
+              ? 'linear-gradient(180deg, #050509 0%, #050509 40%, #020206 100%)'
+              : '#ffffff',
+            borderRight: isDark
+              ? '1px solid rgba(230, 57, 70, 0.55)'
+              : '1px solid #d9d9d9',
             minHeight: 'calc(100vh - 64px)', 
           }}
+          className={isDark ? 'ant-layout-sider-dark' : ''}
         >
           <Menu
             mode="inline"
@@ -242,6 +253,7 @@ export default function MainLayout() {
               height: '100%', 
               borderRight: 0, 
               paddingTop: 24,
+              background: 'transparent',
             }}
           >
             {/* Menu Admin - Full Access */}
@@ -321,13 +333,14 @@ export default function MainLayout() {
           </Menu>
         </Sider>
 
-        <Layout style={{ 
-          padding: '24px', 
-          // Hapus 'background: #fff' atau '#f0f2f5'
-        }}>
+        <Layout
+          style={{
+            padding: isDark ? '0 0 24px 0' : '24px',
+          }}
+        >
           <Content 
             style={{ 
-              padding: 0, 
+              padding: isDark ? '24px 24px 24px 24px' : 0,
               margin: 0, 
               minHeight: 280,
             }}

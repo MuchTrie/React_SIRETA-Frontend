@@ -12,11 +12,13 @@ import {
 } from '@ant-design/icons';
 import { reconciliationAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 const { Title, Text } = Typography;
 
 export default function AdminDashboard() {
   const { settings, refreshSettings, isLoggedIn, user } = useAuth();
+  const { theme } = useTheme();
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -182,8 +184,10 @@ export default function AdminDashboard() {
     ? 'Belum ada aktivitas rekonsiliasi. Mulai proses rekonsiliasi untuk melihat data di sini.' 
     : undefined;
 
+  const isDark = theme === 'dark';
+
   return (
-    <div>
+    <div className={`admin-dashboard-root ${isDark ? 'admin-dashboard-dark' : ''}`}>
       <Title level={2}>
         <TeamOutlined /> Admin Dashboard
       </Title>
@@ -194,7 +198,10 @@ export default function AdminDashboard() {
       {/* Statistics Cards */}
       <Row gutter={[16, 16]} style={{ marginTop: 24 }}>
         <Col xs={24} sm={12}>
-          <Card style={{ height: '100%' }}>
+          <Card
+            style={{ height: '100%' }}
+            className={isDark ? 'admin-card-dark' : ''}
+          >
             <Statistic
               title="Total Rekonsiliasi"
               value={totalRecons}
@@ -204,7 +211,10 @@ export default function AdminDashboard() {
           </Card>
         </Col>
         <Col xs={24} sm={12}>
-          <Card style={{ height: '100%' }}>
+          <Card
+            style={{ height: '100%' }}
+            className={isDark ? 'admin-card-dark' : ''}
+          >
             <Statistic
               title="List Vendor"
               value={vendors.length}
@@ -227,6 +237,7 @@ export default function AdminDashboard() {
           <Card 
             title={<><ClockCircleOutlined /> Recent Activity</>} 
             extra={<Text type="secondary">Last 5 jobs</Text>}
+            className={isDark ? 'admin-card-dark' : ''}
           >
             <Table
               dataSource={recentActivityData}
@@ -243,17 +254,24 @@ export default function AdminDashboard() {
       {/* Feature Status */}
       <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
         <Col span={24}>
-          <Card title="System Status">
+          <Card
+            title="System Status"
+            className={isDark ? 'admin-card-dark' : ''}
+          >
             <Row gutter={16}>
               <Col xs={24} sm={8}>
                 <Card 
                   size="small" 
                   style={{ 
-                    background: settings?.isProsesReconEnabled 
-                      ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' 
-                      : 'linear-gradient(135deg, #d9d9d9 0%, #8c8c8c 100%)',
+                    background: isDark
+                      ? (settings?.isProsesReconEnabled ? '#020617' : '#111827')
+                      : settings?.isProsesReconEnabled
+                        ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                        : 'linear-gradient(135deg, #d9d9d9 0%, #8c8c8c 100%)',
                     border: 'none',
-                    color: 'white'
+                    color: 'white',
+                    borderRadius: 16,
+                    boxShadow: isDark ? '0 10px 24px rgba(0,0,0,0.8)' : undefined,
                   }}
                 >
                   <div style={{ textAlign: 'center' }}>
@@ -273,11 +291,15 @@ export default function AdminDashboard() {
                 <Card 
                   size="small" 
                   style={{ 
-                    background: settings?.isConverterEnabled 
-                      ? 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' 
-                      : 'linear-gradient(135deg, #d9d9d9 0%, #8c8c8c 100%)',
+                    background: isDark
+                      ? (settings?.isConverterEnabled ? '#020617' : '#111827')
+                      : settings?.isConverterEnabled
+                        ? 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
+                        : 'linear-gradient(135deg, #d9d9d9 0%, #8c8c8c 100%)',
                     border: 'none',
-                    color: 'white'
+                    color: 'white',
+                    borderRadius: 16,
+                    boxShadow: isDark ? '0 10px 24px rgba(0,0,0,0.8)' : undefined,
                   }}
                 >
                   <div style={{ textAlign: 'center' }}>
@@ -297,11 +319,15 @@ export default function AdminDashboard() {
                 <Card 
                   size="small" 
                   style={{ 
-                    background: settings?.isHistoryEnabled 
-                      ? 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)' 
-                      : 'linear-gradient(135deg, #d9d9d9 0%, #8c8c8c 100%)',
+                    background: isDark
+                      ? (settings?.isHistoryEnabled ? '#020617' : '#111827')
+                      : settings?.isHistoryEnabled
+                        ? 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
+                        : 'linear-gradient(135deg, #d9d9d9 0%, #8c8c8c 100%)',
                     border: 'none',
-                    color: 'white'
+                    color: 'white',
+                    borderRadius: 16,
+                    boxShadow: isDark ? '0 10px 24px rgba(0,0,0,0.8)' : undefined,
                   }}
                 >
                   <div style={{ textAlign: 'center' }}>

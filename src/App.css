@@ -22,7 +22,7 @@ body {
 
 /* Force header and sidebar background colors */
 .ant-layout-sider {
-  background: transparent !important;
+  background: transparent;
 }
 
 /* ==============================
@@ -272,6 +272,87 @@ body {
 
 .login-extra-text a:hover::after {
   width: 100%;
+}
+
+/* ==============================
+   ADMIN DASHBOARD – DARK THEME
+   (black + red accent)
+================================ */
+
+.admin-dashboard-root {
+  min-height: calc(100vh - 64px);
+}
+
+.admin-dashboard-dark {
+  background:
+    radial-gradient(circle at 0 0, rgba(230, 57, 70, 0.14), transparent 55%),
+    radial-gradient(circle at 100% 100%, rgba(230, 57, 70, 0.14), transparent 55%),
+    linear-gradient(135deg, #050509 0%, #060713 45%, #03030a 100%);
+  color: var(--login-text);
+}
+
+.admin-card-dark.ant-card {
+  background: radial-gradient(circle at 0 0, rgba(230, 57, 70, 0.18), transparent 65%),
+    linear-gradient(145deg, #0b0b13, #11111c);
+  border-radius: 18px;
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  box-shadow:
+    0 18px 45px rgba(0, 0, 0, 0.9),
+    0 0 0 1px rgba(148, 27, 37, 0.45);
+}
+
+.admin-card-dark .ant-card-head-title,
+.admin-card-dark .ant-card-extra,
+.admin-card-dark .ant-typography,
+.admin-card-dark .ant-statistic-title,
+.admin-card-dark .ant-statistic-content {
+  color: var(--login-text) !important;
+}
+
+.admin-card-dark .ant-table,
+.admin-card-dark .ant-table-thead > tr > th,
+.admin-card-dark .ant-table-tbody > tr > td {
+  background: transparent;
+  color: var(--login-text);
+  border-color: rgba(148, 163, 184, 0.35);
+}
+
+.admin-card-dark .ant-table-tbody > tr.ant-table-row:hover > td {
+  background: rgba(15, 23, 42, 0.9);
+}
+
+/* Sidebar menu dark styling */
+.ant-layout-sider-dark .ant-menu-dark,
+.ant-layout-sider-dark .ant-menu-dark .ant-menu-sub {
+  background: transparent;
+}
+
+.ant-layout-sider-dark .ant-menu-item {
+  border-radius: 999px;
+  margin: 2px 10px;
+  padding: 6px 16px !important;
+  height: auto;
+  line-height: 1.4;
+}
+
+.ant-layout-sider-dark .ant-menu-item-selected {
+  background: #020617;
+  border: 1px solid rgba(230, 57, 70, 0.9);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.65);
+}
+
+.ant-layout-sider-dark .ant-menu-item-selected .ant-menu-title-content,
+.ant-layout-sider-dark .ant-menu-item-selected .anticon {
+  color: #fefefe;
+}
+
+.ant-layout-sider-dark .ant-menu-item .ant-menu-title-content,
+.ant-layout-sider-dark .ant-menu-item .anticon {
+  color: rgba(226, 232, 240, 0.82);
+}
+
+.ant-layout-sider-dark .ant-menu-item:not(.ant-menu-item-selected):hover {
+  background: rgba(15, 23, 42, 0.9);
 }
 
 @media (max-width: 480px) {
